@@ -11,8 +11,10 @@ import * as notificationActions from '../../../../../stores/actions/Notification
 
 
 const NotificationItem = ({ title, dateSend,dateRead, id, markAsRead }:any) => {
+  let navigate = useNavigate();
   return (
     <div onClick={() => {
+      navigate('/messages');
       return markAsRead(id);
     }} className="d-flex flex-row mb-3 pb-3 border-bottom cursor-pointer">    
         <i className='iconsminds-mail-send icon-big text-primary'/>

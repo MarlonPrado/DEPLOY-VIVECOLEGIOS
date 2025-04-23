@@ -362,7 +362,15 @@ const SpreadsheetList = (props: any) => {
           className={`ml-1 btn btn-info`}
           type="button"
         >
-          <i className="iconsminds-download"></i> {"Descargar XLS"}
+          <i className="iconsminds-download"></i> {"Descargar XLS2"}
+        </button>
+        <button
+          onClick={download}
+          key={"download"}
+          className={`ml-1 btn btn-success`}
+          type="button"
+        >
+          <i className="iconsminds-download"></i> {"Descargar PDF"}
         </button>
       </div>
 

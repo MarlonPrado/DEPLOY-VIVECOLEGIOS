@@ -155,6 +155,7 @@ const Inbox = (props: InboxProps) => {
               className="top-right-button"
               onClick={() => setModalOpen(!modalOpen)}
               disabled={false}
+
             >
               <IntlMessages id="pages.newMessage" />
             </Button>

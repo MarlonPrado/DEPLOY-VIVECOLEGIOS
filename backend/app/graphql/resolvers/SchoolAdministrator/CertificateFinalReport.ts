@@ -1290,7 +1290,7 @@ export class CertificateFinalReportResolver {
           top: '0',
         },
       });
-      //console.log("done creating pdf");
+      console.log("done creating pdf");
       await page.close();
       await browser.close();
       return dir + '/' + id + '-2' + '.pdf';

@@ -138,12 +138,33 @@ export class UserResolver {
     @Arg('orderCreated', () => Boolean) orderCreated: Boolean,
   ): Promise<UserConnection> {
     let result;
+    
+    // Lista de documentos específicos para pruebas
+    const testDocuments = [
+      "11931500",  // XXXX
+      "11931501",  // XXXX
+      "122412446", // estudiante
+      "1193551190", // estudiante
+      "1193551170", // docentecolegiorandom
+      "1193551171"  // studentcolegiorandom
+    ];
+    
     if (allData) {
       if (orderCreated) {
-        result = await this.repository.findBy({documentNumber: "11931500"}); 
+        // Usar operador $in para seleccionar múltiples documentos
+        result = await this.repository.findBy({
+          where: {
+            documentNumber: { $in: testDocuments }
+          },
+          order: { createdAt: 'DESC' }
+        });
       } else {
-
-        result = await this.repository.findBy({documentNumber: "11931500"}); 
+        // Mismo caso sin ordenamiento
+        result = await this.repository.findBy({
+          where: {
+            documentNumber: { $in: testDocuments }
+          }
+        });
       }
     } else {
       if (orderCreated) {
@@ -161,6 +182,7 @@ export class UserResolver {
         });
       }
     }
+    
     let resultConn = new UserConnection();
     let resultConnection = connectionFromArraySlice(result, args, {
       sliceStart: 0,
