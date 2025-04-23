@@ -7,6 +7,7 @@ import { Button } from 'reactstrap';
 import ProfileImg from '../../../assets/img/profiles/l-1.jpg';
 import IntlMessages from '../../../helpers/IntlMessages';
 import * as inboxActions from '../../../stores/actions/InboxAction';
+import * as notificationActions from '../../../stores/actions/NotificationAction';
 import { Colxx } from '../../common/CustomBootstrap';
 import InboxCreate from './InboxCreate';
 import svgEmpty from '../../../assets/img/svg/scene-inbox-empty.svg';
@@ -30,6 +31,8 @@ interface InboxProps {
   };
   getListAllInbox: (userId: string) => Promise<any>;
   updateInbox: (data: any, id: string) => Promise<any>;
+  getListSomeNotification?: (userId: string) => Promise<any>;
+  updateNotification?: (data: any, id: string) => Promise<any>;
 }
 
 const Inbox = (props: InboxProps) => {
@@ -84,9 +87,53 @@ const Inbox = (props: InboxProps) => {
   // Función para marcar un mensaje como leído
   const markAsRead = async (item: InboxMessage) => {
     try {
+  
       await props.updateInbox({ dateRead: new Date() }, item.id);
+      
+    
+      if (props.getListSomeNotification && props.updateNotification) {
+        try {
+          // Buscar notificaciones actuales del usuario
+          const notifications = await props.getListSomeNotification(props.loginReducer.userId);
+          
+          // Filtrar las que coincidan con el título del mensaje (aproximación)
+          const matchingNotifications = notifications?.filter((n: any) => 
+            n.node.title?.includes(item.title) || 
+            (n.node.message && item.message && n.node.message.includes(item.message))
+          );
+          
+          // Chulear el leido e actualizar pestaña
+          if (matchingNotifications && matchingNotifications.length > 0) {
+            const updatePromises = matchingNotifications.map((n: any) =>
+              props.updateNotification({ dateRead: new Date() }, n.node.id)
+            );
+            await Promise.all(updatePromises);
+          }
+        } catch (notificationError) {
+          console.warn("No se pudieron actualizar las notificaciones relacionadas:", notificationError);
+        }
+      }
+      
+      // 3. Actualizar UI
       await getInboxs();
-    } catch (error: unknown) {
+
+      // 4. Forzar actualización programática del contador
+      // Esta es la solución más simple pero menos elegante
+      setTimeout(() => {
+        // Guarda la posición del scroll
+        const scrollPosition = window.scrollY;
+        
+        // Recarga la página pero mantiene la posición del scroll
+        window.location.reload();
+        
+        // Se puede almacenar la posición en sessionStorage para recuperarla después
+        sessionStorage.setItem('scrollPosition', scrollPosition.toString());
+        
+        // Después del reload, en useEffect del componente:
+        // const savedPosition = sessionStorage.getItem('scrollPosition');
+        // if (savedPosition) window.scrollTo(0, parseInt(savedPosition));
+      }, 500); // Pequeño retraso para que se guarden los cambios
+    } catch (error) {
       console.error("Error al marcar como leído:", error);
     }
   };
@@ -196,7 +243,11 @@ const Inbox = (props: InboxProps) => {
   );
 };
 
-const mapDispatchToProps = { ...inboxActions };
+const mapDispatchToProps = { 
+  ...inboxActions,
+  getListSomeNotification: notificationActions.getListSomeNotification,
+  updateNotification: notificationActions.updateNotification
+};
 
 const mapStateToProps = ({ loginReducer }: any) => {
   return { loginReducer };

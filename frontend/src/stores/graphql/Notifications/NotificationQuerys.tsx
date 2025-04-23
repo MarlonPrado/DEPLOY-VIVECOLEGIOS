@@ -26,7 +26,7 @@ query getAllNotification($userId: String!) {
 
 export const QUERY_GET_SOME_NOTIFICATION = gql`
 query getAllNotification($userId: String!) {
-  data: getAllNotification(orderCreated: true, allData: true, first: 5, userId: $userId) {
+  data: getAllNotification(orderCreated: true, allData: true, first: 15, userId: $userId) {
     edges {
       cursor
       node {
