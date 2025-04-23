@@ -1,0 +1,39 @@
+{
+    "data": [
+        {
+            "id": 1,
+            "users": [
+                0,
+                1
+            ],
+            "lastMessageTime": "18:20",
+            "messages": [
+                {
+                    "sender": 0,
+                    "time": "09:25",
+                    "text": "Los foros de la semana"
+                },
+                {
+                    "sender": 0,
+                    "time": "09:29",
+                    "text": "ya están habilitados."
+                },
+                {
+                    "sender": 0,
+                    "time": "09:36",
+                    "text": "Consulta con el profesor la actividad pendiente."
+                },
+                {
+                    "sender": 1,
+                    "time": "10:12",
+                    "text": "Vale muchas gracias, ya reviso."
+                },
+                {
+                    "sender": 1,
+                    "time": "10:40",
+                    "text": "Listo, todo esta OK, muchas gracias, buen día!."
+                }
+            ]
+        }        
+    ]
+}

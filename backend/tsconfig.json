@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "experimentalDecorators": true,
+    "target": "es2017",
+    "module": "commonjs",
+    "lib": ["dom", "es6"],
+    "outDir": "dist",
+    "rootDir": "app",
+    "removeComments": true,
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "emitDecoratorMetadata": true,
+    "downlevelIteration": true,
+    "moduleResolution": "node",
+    "types": ["node"]
+  }
+}

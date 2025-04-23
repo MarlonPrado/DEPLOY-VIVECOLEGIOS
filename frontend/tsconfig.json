@@ -1,0 +1,37 @@
+{
+  "compilerOptions": {
+    "forceConsistentCasingInFileNames": false,
+    "outDir": "./dist/",
+    "noImplicitAny": true,
+    "sourceMap": true,
+    "module": "esnext",
+    "target": "es5",
+    "jsx": "react",
+    "allowJs": true,
+    "allowSyntheticDefaultImports": true,
+    "strict": false,
+    "esModuleInterop": true,
+    "downlevelIteration": true,
+    "lib": [
+      "dom",
+      "es2018",
+      "es2015"
+    ],
+    "moduleResolution": "node",
+    "resolveJsonModule": true
+  },
+  "awesomeTypescriptLoaderOptions": {
+    "useWebpackText": true,
+    "forkChecker": true,
+    "useCache": true
+  },
+  "compileOnSave": true,
+  "buildOnSave": true,
+  "exclude": [
+    "node_modules",
+    "built",
+    "built-components",
+    "built-production",
+    "dist"
+  ]
+}

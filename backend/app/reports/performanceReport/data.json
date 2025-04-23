@@ -1,0 +1,36 @@
+{
+  "schoolName": "INSTITUCION EDUCATIVA NUESTRA SEÑORA DEL ROSARIO",
+  "studentName": "PAOLA ANDREA ANDRADE ARELLANO",
+  "studentDocumentNumber": "1090377374",
+  "studentAcademicGradeName": "UNDECIMO",
+  "studentAcademicCourseName": "11-02 T",
+  "studentAcademicDayName": "TARDE",
+  "academicPeriodName": "PRIMER PERIODO",
+  "promStudent": "5.92 - BAJO",
+  "puestoEstudiante": "17",
+  "promCourse": "7.08 - ALTO",
+  "titular": "WILMAN ONOFRE PEREX CUENAVERTURA",
+  "campusName": "SEDE SECUNDARIA",
+  "areas": [
+    {
+      "name": "CIENCIAS NATURALES Y  EDUCACIÓN AMBIENTAL",
+      "id": "6290ebfdddfd2a07ee4ac8b3",
+      "asignatures": [
+        {
+          "name": "CIENCIAS NATURALES Y  EDUCACIÓN AMBIENTAL",
+          "id": "6290ebfdddfd2a07ee4ac8b3"
+        }
+      ]
+    },
+    {
+      "name": "TECNOLOGÍA E INFORMÁTICA",
+      "id": "6290edd8ddfd2a07ee4ac8c4",
+      "asignatures": [
+        {
+          "name": "TECNOLOGÍA E INFORMÁTICA",
+          "id": "6290edd8ddfd2a07ee4ac8c4"
+        }
+      ]
+    }
+  ]
+}

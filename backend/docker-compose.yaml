@@ -1,0 +1,11 @@
+version: '3'
+
+services:
+  mongodb:
+    image: mongo
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: db_user_vivecolegios
+      MONGO_INITDB_ROOT_PASSWORD: db_user_vivecolegios2021
+    ports:
+      - 27017:27017

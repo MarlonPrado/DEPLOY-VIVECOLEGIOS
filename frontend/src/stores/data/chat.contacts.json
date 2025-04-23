@@ -1,0 +1,46 @@
+{
+    "data": [
+        {
+            "id": 0,
+            "name": "Miguel Plazas",
+            "thumb": "../../../assets/img/profiles/l-1.jpg",
+            "lastSeenDate":"0"
+        },
+        {
+            "id": 1,
+            "name": "Josue Rincón",
+            "thumb": "../../../assets/img/profiles/l-4.jpg",
+            "lastSeenDate":"Última vez 15:24"
+        },
+        {
+            "id": 2,
+            "name": "Marly Castellanos",
+            "thumb": "/assets/img/profiles/l-3.jpg",
+            "lastSeenDate":"Última vez 13:24"
+        },
+        {
+            "id": 3,
+            "name": "Pedro Ruedas",
+            "thumb": "/assets/img/profiles/l-2.jpg",
+            "lastSeenDate":"Última vez 17:42"
+        },
+        {
+            "id": 4,
+            "name": "Ramiro Orduz",
+            "thumb": "/assets/img/profiles/l-5.jpg",
+            "lastSeenDate":"Última vez 18:00"
+        },
+        {
+            "id": 5,
+            "name": "Carolina Fajardo",
+            "thumb": "/assets/img/profiles/l-4.jpg",
+            "lastSeenDate":"Última vez 22:24"
+        },
+        {
+            "id": 6,
+            "name": "Sebastian Contreras",
+            "thumb": "/assets/img/profiles/l-4.jpg",
+            "lastSeenDate":"Última vez 00:24"
+        }
+    ]
+}

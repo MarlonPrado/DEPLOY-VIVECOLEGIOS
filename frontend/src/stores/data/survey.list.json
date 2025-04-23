@@ -1,0 +1,32 @@
+{
+    "data": [
+      {
+        "title": "Prueba de matemáticas",
+        "category" : "Diagnóstica",
+        "createDate" : "22.08.2018",
+        "status" : "ACTIVE",
+        "label": "INICIAL",
+        "labelColor": "primary",
+        "id": 1
+      },
+      {
+        "title": "Prueba de ciencias sociales",
+        "category" : "Formativa",
+        "createDate" : "22.09.2018",
+        "status" : "ACTIVE",
+        "label": "MEDIO",
+        "labelColor": "secondary",
+        "id": 2
+      },
+      {
+        "title": "Prueba de lecturaCrítica",
+        "category" : "Intermedia",
+        "createDate" : "15.09.2018",
+        "status" : "COMPLETED",
+        "label": "AVANZADO",
+        "labelColor": "info",
+        "id": 3
+      }
+    ]
+  }
+  

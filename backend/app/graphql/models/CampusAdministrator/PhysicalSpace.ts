@@ -1,0 +1,5 @@
+
+// nombre
+// tipoDeEspacioFisico
+// estado
+// Capacidad

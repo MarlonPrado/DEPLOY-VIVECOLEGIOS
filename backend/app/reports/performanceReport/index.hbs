@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf8">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/css/bootstrap.min.css" rel="stylesheet"
+    integrity="sha384-gH2yIJqKdNHPEq0n4Mqa/HGKIhSkIHeL5AyhkYV8i59U5AR6csBvApHHNl/vI1Bx" crossorigin="anonymous">
+  <script>
+    function onChange(element) {
+      const pageNumberElement = element.getElementsByClassName('pageNumber')[0];
+      const totalPagesElement = element.getElementsByClassName('totalPages')[0];
+      if (pageNumberElement.textContent === totalPagesElement.textContent) {
+        element.style.color = 'red'
+      }
+    }
+  </script>
+  <style>
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      background: rgb(241, 241, 241);
+      box-sizing: border-box;
+      display: block;
+      font-size: 10px;
+      font-family: Arial, Helvetica, sans-serif;
+      -webkit-print-color-adjust: exact;
+    }
+
+    .page {
+      position: relative;
+      height: 100%;
+      width: 100%;
+      display: block;
+      page-break-after: auto;
+      margin: 50px;
+      overflow: hidden;
+    }
+
+    .app-student-notes {
+      display: grid;
+      background-color: #e6e7e9;
+      grid-template-columns: 25% 50% 25%;
+      width: 100%;
+      height: 120px;
+      background-image: url("https://vivecolegios.nortedesantander.gov.co:4100/public/uploads/users/profile/61faa0716770295e7c3775ab/VCpmSvM0jrd93e.svg");
+      background-size: 100%;
+      background-repeat: no-repeat;
+    }
+
+    .header-img-school {
+      margin-left: 25%;
+      margin-top: 5%;
+      width: auto;
+      height: 100px;
+    }
+
+    .header-img-app {
+      margin-left: 50%;
+      margin-top: 5%;
+      width: 7rem;
+    }
+
+    @media print {
+      .page {
+        margin: 0;
+        height: 100%;
+        width: 100%;
+      }
+    }
+
+    .header-student-notes {
+      background-size: 100%;
+      background-repeat: no-repeat;
+      display: flex;
+      justify-content: space-between;
+      padding: 1rem 5rem;
+      align-items: center;
+    }
+
+    .nombre-instituto-note {
+      color: #fff;
+      text-align: center;
+      height: 100%;
+      padding-top: 3%;
+    }
+
+    .titulo h1 {
+      text-align: center;
+      font-size: 18px;
+    }
+
+    .titulo p {
+      text-align: center;
+      font-size: 16px;
+    }
+
+    .titulo h2 {
+      text-align: center;
+      font-size: 16px;
+    }
+
+    .nombre-instituto-note h1 {
+      font-weight: bold;
+      font-size: 18px;
+    }
+
+    .nombre-instituto-note p {
+      font-weight: 100;
+      font-size: 10px;
+    }
+
+    .content-student-notes {
+      width: 90%;
+      margin: 0 auto;
+      margin-top: 2rem;
+      display: block;
+    }
+
+    .content-intro {
+      width: 90%;
+      margin: 0 auto;
+      display: block;
+      font-size: 12px;
+      text-align: justify;
+    }
+
+    .data-student {
+      display: grid;
+      grid-template-columns: 8fr repeat(3, 3.2fr);
+      grid-template-rows: repeat(2, 1fr);
+      grid-column-gap: 0.5rem;
+      grid-row-gap: 0.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .data-student2 {
+      display: grid;
+      grid-template-columns: repeat(6, auto);
+      grid-template-rows: 1fr;
+      grid-column-gap: 0.5rem;
+      grid-row-gap: 0px;
+      margin-bottom: 0.5rem;
+    }
+
+    .data-student3 {
+      display: grid;
+      grid-template-columns: repeat(4, auto);
+      grid-template-rows: 1fr;
+      grid-column-gap: 0.5rem;
+      grid-row-gap: 0px;
+      margin-bottom: 0.5rem;
+    }
+
+    .data-student4 {
+      display: grid;
+      grid-template-columns: repeat(6, auto);
+      grid-template-rows: 1fr;
+      grid-column-gap: 0.5rem;
+      grid-row-gap: 0px;
+      margin-bottom: 0.5rem;
+    }
+
+    .data-note-student {
+      display: grid;
+      grid-template-rows: 1fr;
+      grid-column-gap: 1rem;
+      grid-row-gap: 0.5rem;
+      margin-top: 2rem;
+    }
+
+    .data-note-student-behaviour {
+      display: grid;
+      grid-template-columns: 80% 18.5%;
+      grid-template-rows: 1fr;
+      grid-column-gap: 1rem;
+      grid-row-gap: 0.5rem;
+      margin-top: 2rem;
+    }
+
+    .item-data {
+      background-color: #c1e7f5;
+      border-radius: 5px;
+      text-align: center;
+      color: #000;
+      font-weight: 600;
+      padding: auto;
+    }
+
+    .item-data-flex {
+      display: flex;
+      background-color: transparent !important;
+      justify-content: space-around;
+      gap: 0.5rem;
+    }
+
+    .item-data-flex div {
+      background-color: #fff;
+      border-radius: 8px;
+      text-align: center;
+      color: #000;
+      font-weight: 600;
+      width: 100%;
+    }
+
+    .data-materia {
+      display: grid;
+      grid-template-columns: 2fr 6fr 1fr 1fr 2fr 6fr 3fr;
+      grid-template-rows: 1fr;
+      grid-column-gap: 0.5rem;
+      grid-row-gap: 0px;
+      margin-top: 0.5rem;
+    }
+
+    .data-observacion {
+      display: grid;
+      grid-template-columns: 16fr;
+      grid-template-rows: 1fr;
+      grid-column-gap: 0.5rem;
+      grid-row-gap: 0px;
+      margin-top: 0.5rem;
+    }
+
+    .observaciones-note {
+      margin-top: 2rem;
+      margin-bottom: 2rem;
+    }
+
+    .item-data-white {
+      background-color: #fff !important;
+    }
+
+    .item-note-gris {
+      background-color: #808285 !important;
+      color: #fff;
+    }
+
+    .item-data-flex-azul div {
+      background-color: #c1e7f5;
+    }
+
+    .data-observacion p {
+      margin-bottom: 0;
+      text-align: left !important;
+    }
+
+    .data-observacion .observacion {
+      padding: 0.8rem 3rem;
+    }
+
+    .data-observacion .desempeño {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      background-color: transparent !important;
+    }
+
+    .data-observacion .desempeño div {
+      width: 100%;
+    }
+
+    .data-materia div {
+      font-weight: bold !important;
+    }
+
+    .container-firma-nombre {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 1rem;
+      align-items: center;
+    }
+
+    .container-firma {
+      width: 35%;
+      text-align: center;
+    }
+
+    .firma {
+      border-bottom: 2px solid;
+      width: 80%;
+      margin: 0 auto;
+      margin-bottom: 0.3rem;
+    }
+
+    .container-firma p:nth-child(2) {
+      margin-bottom: 0;
+      font-weight: bold;
+    }
+
+    .container-firma p:nth-child(3) {
+      font-weight: bold;
+    }
+
+    .container-observacion {
+      width: 35%;
+      background: #fff;
+      margin-bottom: 2rem;
+      height: 6rem;
+      padding: 0.3rem;
+      border-radius: 8px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="page">
+    <div id="header">
+      <div class="app-student-notes" id="header">
+        <div>
+          <img class="header-img-school" src="https://vivecolegios.nortedesantander.gov.co:4100/{{schoolLogo}}" alt="" />
+        </div>
+        <div class="nombre-instituto-note">
+          <h1>
+            {{schoolName}} <br />
+          </h1>
+          <p>
+            {{schoolResolution}}<br />
+            {{schoolDaneNit}} <br />
+            {{schoolAddress}} <br />
+          </p>
+        </div>
+        <div>
+          <img class="header-img-app"
+            src="https://vivecolegios.nortedesantander.gov.co:4100/public/uploads/users/profile/61faa0716770295e7c3775ab/e59qDbP1sjjFCH.png"
+            alt="" />
+        </div>
+      </div>
+    </div>
+    <div style="padding-bottom: 2%; text-align: end; padding-right: 1%;">
+      <span>Generado el {{generatedDate}} {{generatedHour}}</span>
+    </div>
+    <div class="titulo">
+      <h1>
+        Informe de Desempeño <br />
+      </h1>
+    </div>
+    <div class="content-student-notes">
+      <div class="data-student">
+        <div class="item-data">Estudiante</div>
+        <div class="item-data">Documento</div>
+        <div class="item-data">Grado</div>
+        <div class="item-data">Curso</div>
+        <div class="item-data item-data-white">{{studentName}}</div>
+        <div class="item-data item-data-white">{{studentDocumentNumber}}</div>
+        <div class="item-data item-data-white">{{studentAcademicGradeName}}</div>
+        <div class="item-data item-data-white">{{studentAcademicCourseName}}</div>
+      </div>
+      <div class="data-student4">
+        <div class="item-data">Año Escolar</div>
+        <div class="item-data item-data-white">{{schoolYear}}</div>
+        <div class="item-data">Periodo Académico</div>
+        <div class="item-data item-data-white">{{academicPeriodName}}</div>
+        <div class="item-data">Jornada</div>
+        <div class="item-data item-data-white">{{studentAcademicDayName}}</div>
+      </div>
+      <div class="data-student2">
+        <div class="item-data">Promedio</div>
+        <div class="item-data item-data-white">{{promStudent}}</div>
+        <div class="item-data">Puesto Estudiante</div>
+        <div class="item-data item-data-white">{{puestoEstudiante}}</div>
+        <div class="item-data">Promedio del Curso</div>
+        <div class="item-data item-data-white">{{promCourse}}</div>
+      </div>
+      <div class="data-student3">
+        <div class="item-data">Docente Titular</div>
+        <div class="item-data item-data-white">{{titular}}</div>
+        <div class="item-data">Sede</div>
+        <div class="item-data item-data-white">{{campusName}}</div>
+      </div>
+      <div class="data-note-student" style="grid-template-columns: {{academicPeriodsCount}}">
+        {{#iff reportPerformanceAreaAsignatureType '==' 'AREA_ASIGNATURE'}}
+        <div class="item-data item-note-gris">Áreas / Asignaturas</div>
+        {{/iff }}
+        {{#iff reportPerformanceAreaAsignatureType '==' 'AREA'}}
+        <div class="item-data item-note-gris">Áreas</div>
+        {{/iff }}
+        {{#iff reportPerformanceAreaAsignatureType '==' 'ASIGNATURE'}}
+        <div class="item-data item-note-gris">Asignaturas</div>
+        {{/iff }}
+        {{#each academicPeriods as | academicPeriod academicPeriodId|}}
+        <div class="item-data item-note-gris">{{academicPeriod.name}}</div>
+        {{/each}}
+        {{#each areas as | area areaId|}}
+        {{#iff ../reportPerformanceAreaAsignatureType '==' 'AREA_ASIGNATURE'}}
+        <div class="item-data">{{area.name}}</div>
+        {{#each area.academicPeriods as | academicPeriod2 academicPeriodId2|}}
+        {{#each ../../../notesAreas as | notesArea notesAreaId|}}
+        {{#iff notesArea.areaId '===' area.id}}
+        {{#iff academicPeriod2.id '===' notesArea.academicPeriodId}}
+        <div class="item-data item-data-flex item-data-flex-azul">
+          {{#iff ../../../../../performanceLevelType '==' 'QUANTITATIVE'}}
+          <div>{{notesArea.assessment}}</div>
+          {{/iff }}
+          <div>{{notesArea.performanceLevel}}</div>
+        </div>
+        {{/iff }}
+        {{/iff }}
+        {{/each}}
+        {{/each}}
+        {{/iff }}
+        {{#iff ../reportPerformanceAreaAsignatureType '==' 'AREA'}}
+        <div class="item-data">{{area.name}}</div>
+        {{#each area.academicPeriods as | academicPeriod2 academicPeriodId2|}}
+        {{#each ../../../notesAreas as | notesArea notesAreaId|}}
+        {{#iff notesArea.areaId '===' area.id}}
+        {{#iff academicPeriod2.id '===' notesArea.academicPeriodId}}
+        <div class="item-data item-data-flex item-data-flex-azul">
+          {{#iff ../../../../../performanceLevelType '==' 'QUANTITATIVE'}}
+          <div>{{notesArea.assessment}}</div>
+          {{/iff }}
+          <div>{{notesArea.performanceLevel}}</div>
+        </div>
+        {{/iff }}
+        {{/iff }}
+        {{/each}}
+        {{/each}}
+        {{/iff }}
+        {{#iff ../reportPerformanceAreaAsignatureType '==' 'AREA_ASIGNATURE'}}
+        {{#each area.asignatures as | asignature asignatureId|}}
+        <div class="item-data item-data-white">{{asignature.name}}</div>
+        {{#each ../../../academicPeriods as | academicPeriods3 academicPeriodId3|}}
+        {{#each ../../../../notesAsignatures as | notesAsignature notesAsignatureId|}}
+        {{#iff notesAsignature.asignatureId '===' asignature.id}}
+        {{#iff academicPeriods3.id '===' notesAsignature.academicPeriodId}}
+        <div class="item-data item-data-flex">
+          {{#iff ../../../../../../performanceLevelType '==' 'QUANTITATIVE'}}
+          <div>{{notesAsignature.assessment}}</div>
+          {{/iff }}
+          <div>{{notesAsignature.performanceLevel}}</div>
+        </div>
+        {{/iff }}
+        {{/iff }}
+        {{/each}}
+        {{/each}}
+        {{/each}}
+        {{/iff }}
+        {{#iff ../reportPerformanceAreaAsignatureType '==' 'ASIGNATURE'}}
+        {{#each area.asignatures as | asignature asignatureId|}}
+        <div class="item-data item-data-white">{{asignature.name}}</div>
+        {{#each ../../../academicPeriods as | academicPeriods3 academicPeriodId3|}}
+        {{#each ../../../../notesAsignatures as | notesAsignature notesAsignatureId|}}
+        {{#iff notesAsignature.asignatureId '===' asignature.id}}
+        {{#iff academicPeriods3.id '===' notesAsignature.academicPeriodId}}
+        <div class="item-data item-data-flex">
+          {{#iff ../../../../../../performanceLevelType '==' 'QUANTITATIVE'}}
+          <div>{{notesAsignature.assessment}}</div>
+          {{/iff }}
+          <div>{{notesAsignature.performanceLevel}}</div>
+        </div>
+        {{/iff }}
+        {{/iff }}
+        {{/each}}
+        {{/each}}
+        {{/each}}
+        {{/iff }}
+        {{/each}}
+      </div>
+      <div class="data-note-student-behaviour">
+        {{#iff reportPerformanceBehaviourStudent '==' 'DISPLAY'}}
+        <div class="item-data item-note-gris">Comportamiento Escolar</div>
+        {{#each ../noteBehaviour as | behaviour noteBehaviourId|}}
+        <div class="item-data item-note-gris">
+          {{#iff ../../reportPerformanceBehaviourStudentType '==' 'QUANTITATIVE'}}
+          {{behaviour.assessment}} -
+          {{/iff }}
+          {{behaviour.performanceLevel}}
+        </div>
+        {{/each}}
+        {{/iff }}
+      </div>
+      <div class="container-firma-nombre">
+        {{#iff reportPerformanceSignatureType '==' 'PRINCIPAL'}}
+        <div class="container-firma">
+          {{#iff ../imgPrincipalSignature '==' '*'}}
+          <div style="width:200px; height:100px;padding-bottom: 5px"></div>
+          {{/iff }}
+          {{#iff ../imgPrincipalSignature '!=' '*'}}
+          <img src="https://vivecolegios.nortedesantander.gov.co:4100/{{../imgPrincipalSignature}}" alt="" width="200"
+            height="100" style="padding-bottom: 5px" />
+          {{/iff }}
+          <div class="firma"></div>
+          <p style="margin:0; padding:0">{{../schoolPrincipalSignature}}</p>
+          <p style="margin:0; padding:0">{{../reportPerformanceTitleSignaturePrincipal}}</p>
+        </div>
+        {{/iff }}
+        {{#iff reportPerformanceSignatureType '==' 'TEACHER_COURSE'}}
+        <div class="container-firma">
+          {{#iff ../imgTitularSignature '==' '*'}}
+          <div style="width:200px; height:100px;padding-bottom: 5px"></div>
+          {{/iff }}
+          {{#iff ../imgTitularSignature '!=' '*'}}
+          <img src="https://vivecolegios.nortedesantander.gov.co:4100/{{../imgTitularSignature}}" alt="" width="200"
+            height="100" style="padding-bottom: 5px" />
+          {{/iff }}
+          <div class="firma"></div>
+          <p style="margin:0; padding:0">{{../titular}}</p>
+          <p style="margin:0; padding:0">{{../reportPerformanceTitleSignatureTeacherCourse}}</p>
+        </div>
+        {{/iff }}
+        {{#iff reportPerformanceSignatureType '==' 'TEACHER_COURSE_AND_PRINCIPAL'}}
+        <div class="container-firma">
+          {{#iff ../imgTitularSignature '==' '*'}}
+          <div style="width:200px; height:100px;padding-bottom: 5px"></div>
+          {{/iff }}
+          {{#iff ../imgTitularSignature '!=' '*'}}
+          <img src="https://vivecolegios.nortedesantander.gov.co:4100/{{../imgTitularSignature}}" alt="" width="200"
+            height="100" style="padding-bottom: 5px" />
+          {{/iff }}
+          <div class="firma"></div>
+          <p style="margin:0; padding:0">{{../titular}}</p>
+          <p style="margin:0; padding:0">{{../reportPerformanceTitleSignatureTeacherCourse}}</p>
+        </div>
+        <div class="container-firma">
+          {{#iff ../imgPrincipalSignature '==' '*'}}
+          <div style="width:200px; height:100px;padding-bottom: 5px"></div>
+          {{/iff }}
+          {{#iff ../imgPrincipalSignature '!=' '*'}}
+          <img src="https://vivecolegios.nortedesantander.gov.co:4100/{{../imgPrincipalSignature}}" alt="" width="200"
+            height="100" style="padding-bottom: 5px" />
+          {{/iff }}
+          <div class="firma"></div>
+          <p style="margin:0; padding:0">{{../schoolPrincipalSignature}}</p>
+          <p style="margin:0; padding:0">{{../reportPerformanceTitleSignaturePrincipal}}</p>
+        </div>
+        {{/iff }}
+        {{#iff reportPerformanceSignatureType '==' 'PRINCIPAL_SECRETARY'}}
+        <div class="container-firma">
+          {{#iff ../imgPrincipalSignature '==' '*'}}
+          <div style="width:200px; height:100px;padding-bottom: 5px"></div>
+          {{/iff }}
+          {{#iff ../imgPrincipalSignature '!=' '*'}}
+          <img src="https://vivecolegios.nortedesantander.gov.co:4100/{{../imgPrincipalSignature}}" alt="" width="200"
+            height="100" style="padding-bottom: 5px" />
+          {{/iff }}
+          <div class="firma"></div>
+          <p style="margin:0; padding:0">{{../schoolPrincipalSignature}}</p>
+          <p style="margin:0; padding:0">{{../reportPerformanceTitleSignaturePrincipal}}</p>
+        </div>
+        <div class="container-firma">
+          {{#iff ../imgSecretarySignature '==' '*'}}
+          <div style="width:200px; height:100px;padding-bottom: 5px"></div>
+          {{/iff }}
+          {{#iff ../imgSecretarySignature '!=' '*'}}
+          <img src="https://vivecolegios.nortedesantander.gov.co:4100/{{../imgSecretarySignature}}" alt="" width="200"
+            height="100" style="padding-bottom: 5px" />
+          {{/iff }}
+          <div class="firma"></div>
+          <p style="margin:0; padding:0">{{../schoolSecretarySignature}}</p>
+          <p style="margin:0; padding:0">{{../reportCertificateFinalSignatureSecretary}}</p>
+        </div>
+        {{/iff }}
+      </div>
+    </div>
+    <div id="footer" style="padding-bottom: 1%; margin-top: 1%">
+      <div style="background-color: #1174bc; color: #fff; text-align: center;">
+        Página <span class="pageNumber"></span>/<span class="totalPages"></span>
+      </div>
+    </div>
+  </div>
+</body>
+
+</html>
