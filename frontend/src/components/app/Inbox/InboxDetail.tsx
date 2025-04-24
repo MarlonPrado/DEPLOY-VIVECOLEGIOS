@@ -9,8 +9,7 @@ import {
   ModalHeader, 
   ModalBody, 
   ModalFooter,
-  Row,
-  Col
+  Row
 } from 'reactstrap';
 import moment from 'moment';
 import 'moment/locale/es';
@@ -21,53 +20,34 @@ import * as notificationActions from '../../../stores/actions/NotificationAction
 import { Colxx } from '../../common/CustomBootstrap';
 import InboxCreate from './InboxCreate';
 import { createNotification } from '../../../helpers/Notification';
-import svgEmpty from '../../../assets/img/svg/scene-inbox-empty.svg';
 import defaultAvatar from '../../../assets/img/profiles/l-1.jpg';
 
-// Definir interfaces para mejorar la tipificación
-interface InboxMessage {
-  id: string;
-  title: string;
-  message: string;
-  dateSend: string;
-  dateRead: string | null;
-  user?: {
-    name: string;
-    lastName: string;
-    profilePhoto?: string;
-  };
-}
-
-interface InboxProps {
-  loginReducer: {
-    userId: string;
-  };
-  getListAllInbox: (userId: string) => Promise<any>;
-  updateInbox: (data: any, id: string) => Promise<any>;
-  deleteInbox: (id: string) => Promise<any>;
-  getListSomeNotification?: (userId: string) => Promise<any>;
-  updateNotification?: (data: any, id: string) => Promise<any>;
-}
-
-const InboxDetail = (props: InboxProps) => {
+const InboxDetail = (props: any) => {
   const [loading, setLoading] = useState(true);
-  const [messages, setMessages] = useState<InboxMessage[]>([]);
+  const [messages, setMessages] = useState([]);
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [viewModalOpen, setViewModalOpen] = useState(false);
-  const [selectedMessage, setSelectedMessage] = useState<InboxMessage | null>(null);
+  const [selectedMessage, setSelectedMessage] = useState(null);
   
   // Efecto para cargar los mensajes iniciales
   useEffect(() => {
-    loadMessages();
+    console.log("InboxDetail loginReducer:", props.loginReducer);
     // Configurar locale español para moment
     moment.locale('es');
-  }, []);
+    
+    // Solo cargar mensajes cuando tengamos el ID de usuario
+    if (props?.loginReducer?.userId) {
+      loadMessages();
+    }
+  }, [props.loginReducer]);
 
   // Función para cargar mensajes
   const loadMessages = async () => {
+    if (!props?.loginReducer?.userId) return;
+    
     setLoading(true);
     try {
-      const listData = await props.getListAllInbox(props?.loginReducer?.userId);
+      const listData = await props.getListAllInbox(props.loginReducer.userId);
       
       if (listData && Array.isArray(listData)) {
         setMessages(listData.map((c: any) => c.node));
@@ -84,13 +64,18 @@ const InboxDetail = (props: InboxProps) => {
   };
 
   // Función para ver el mensaje completo
-  const viewFullMessage = (message: InboxMessage) => {
+  const viewFullMessage = (message: any) => {
     setSelectedMessage(message);
     setViewModalOpen(true);
+    
+    // Si el mensaje no está marcado como leído, marcarlo ahora
+    if (!message.dateRead) {
+      markAsRead(message);
+    }
   };
 
   // Función para marcar un mensaje como leído
-  const markAsRead = async (message: InboxMessage) => {
+  const markAsRead = async (message: any) => {
     try {
       // No mostrar acción si ya está leído
       if (message.dateRead) {
@@ -101,7 +86,7 @@ const InboxDetail = (props: InboxProps) => {
       await props.updateInbox({ dateRead: new Date() }, message.id);
       
       // Actualizar notificaciones relacionadas
-      if (props.getListSomeNotification && props.updateNotification) {
+      if (props.getListSomeNotification && props.updateNotification && props.loginReducer?.userId) {
         try {
           const notifications = await props.getListSomeNotification(props.loginReducer.userId);
           
@@ -117,9 +102,6 @@ const InboxDetail = (props: InboxProps) => {
           console.warn("Error actualizando notificaciones:", notificationError);
         }
       }
-      
-      // Mostrar notificación de éxito
-      createNotification('success', 'Mensaje actualizado', 'El mensaje ha sido marcado como leído');
       
       // Actualizar UI
       await loadMessages();
@@ -158,11 +140,12 @@ const InboxDetail = (props: InboxProps) => {
   
   // Formato completo de fecha
   const getFullDate = (dateString: string) => {
+    if (!dateString) return '';
     return moment(dateString).format('D [de] MMMM [de] YYYY, HH:mm');
   };
 
   // Renderizar tarjeta individual de mensaje
-  const renderMessageCard = (message: InboxMessage, index: number) => {
+  const renderMessageCard = (message: any, index: number) => {
     const isUnread = !message.dateRead;
     const senderName = message.user ? `${message.user.name} ${message.user.lastName}` : 'Usuario desconocido';
     const profileImage = message.user?.profilePhoto || defaultAvatar;
@@ -175,17 +158,29 @@ const InboxDetail = (props: InboxProps) => {
     return (
       <Colxx xxs="12" md="6" xl="4" key={message.id || index} className="mb-4">
         <Card 
-          className={`inbox-card shadow-sm ${isUnread ? 'border-left-accent' : ''}`}
-          style={{ cursor: 'pointer' }}
+          className={`inbox-card shadow-sm ${isUnread ? 'border-left-primary' : ''}`}
+          style={{ 
+            cursor: 'pointer', 
+            borderLeft: isUnread ? '4px solid #3e3cb7' : '',
+          }}
           onClick={() => viewFullMessage(message)}
         >
           <CardBody className="d-flex flex-column">
             <div className="d-flex mb-3">
-              <div className="user-avatar mr-2">
+              <div 
+                className="mr-2" 
+                style={{ 
+                  width: '40px', 
+                  height: '40px', 
+                  overflow: 'hidden', 
+                  borderRadius: '50%'
+                }}
+              >
                 <img 
                   src={profileImage} 
                   alt={senderName}
-                  className="img-fluid rounded-circle"
+                  className="img-fluid"
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                 />
               </div>
               <div className="d-flex flex-column flex-grow-1">
@@ -213,17 +208,15 @@ const InboxDetail = (props: InboxProps) => {
             
             <div className="d-flex justify-content-between mt-2 pt-2 border-top">
               <Button 
-                color="outline-primary" 
+                color="outline-secondary" 
                 size="sm" 
                 onClick={(e) => {
                   e.stopPropagation();
                   viewFullMessage(message);
                 }}
-                className="btn-icon"
-                title="Ver mensaje completo"
               >
                 <i className="simple-icon-eye mr-1"></i>
-                <span className="d-none d-sm-inline">Ver</span>
+                Ver
               </Button>
               
               <Button 
@@ -233,12 +226,10 @@ const InboxDetail = (props: InboxProps) => {
                   e.stopPropagation();
                   markAsRead(message);
                 }}
-                disabled={!isUnread}
-                className="btn-icon"
-                title="Marcar como leído"
+                disabled={!!message.dateRead}
               >
                 <i className="simple-icon-check mr-1"></i>
-                <span className="d-none d-sm-inline">Leído</span>
+                Leído
               </Button>
               
               <Button 
@@ -248,11 +239,9 @@ const InboxDetail = (props: InboxProps) => {
                   e.stopPropagation();
                   deleteMessage(message.id);
                 }}
-                className="btn-icon"
-                title="Eliminar mensaje"
               >
                 <i className="simple-icon-trash mr-1"></i>
-                <span className="d-none d-sm-inline">Eliminar</span>
+                Eliminar
               </Button>
             </div>
           </CardBody>
@@ -271,7 +260,6 @@ const InboxDetail = (props: InboxProps) => {
           </h1>
           <Button
             color="primary"
-            size="lg"
             className="btn-shadow"
             onClick={() => setCreateModalOpen(!createModalOpen)}
           >
@@ -291,19 +279,16 @@ const InboxDetail = (props: InboxProps) => {
       ) : (
         <>
           {/* Mensajes o estado vacío */}
-          {messages.length > 0 ? (
+          {messages && messages.length > 0 ? (
             <Row>
               {messages.map((message, index) => renderMessageCard(message, index))}
             </Row>
           ) : (
-            <Card className="text-center p-5">
+            <Card className="text-center p-5 bg-white">
               <CardBody>
-                <img 
-                  src={svgEmpty} 
-                  alt="Sin mensajes" 
-                  className="img-fluid mb-4" 
-                  style={{ maxWidth: '250px' }} 
-                />
+                <div className="d-flex justify-content-center mb-3">
+                  <i className="iconsminds-mail-read" style={{ fontSize: '5rem', opacity: '0.5' }}></i>
+                </div>
                 <h3 className="font-weight-bold mb-3">Tu bandeja está vacía</h3>
                 <p className="text-muted mb-4">
                   Aún no tienes mensajes. Cuando recibas uno, aparecerá aquí.
@@ -323,53 +308,59 @@ const InboxDetail = (props: InboxProps) => {
           {/* Modal para crear mensaje nuevo */}
           <InboxCreate
             modalOpen={createModalOpen}
-            getInboxs={loadMessages}
             toggleModal={() => setCreateModalOpen(!createModalOpen)}
+            getInboxs={loadMessages}
           />
           
           {/* Modal para ver mensaje completo */}
           <Modal
             isOpen={viewModalOpen}
             toggle={() => setViewModalOpen(!viewModalOpen)}
-            size="lg"
-            className="modal-message"
+            className="modal-dialog-centered"
           >
             {selectedMessage && (
               <>
                 <ModalHeader toggle={() => setViewModalOpen(false)}>
-                  {selectedMessage.title || 'Sin título'}
+                  <div className="w-100">
+                    <h5 className="mb-1">{selectedMessage.title || 'Sin título'}</h5>
+                    <div className="d-flex align-items-center">
+                      <div 
+                        className="mr-2" 
+                        style={{ width: '24px', height: '24px', overflow: 'hidden', borderRadius: '50%' }}
+                      >
+                        <img 
+                          src={selectedMessage.user?.profilePhoto || defaultAvatar} 
+                          alt="Remitente"
+                          className="img-fluid rounded-circle"
+                        />
+                      </div>
+                      <small className="text-muted">
+                        De: {selectedMessage.user ? `${selectedMessage.user.name} ${selectedMessage.user.lastName}` : 'Usuario desconocido'}
+                      </small>
+                    </div>
+                  </div>
                 </ModalHeader>
                 
                 <ModalBody>
-                  <div className="message-header mb-4 d-flex align-items-center">
-                    <div className="user-avatar-lg mr-3">
-                      <img 
-                        src={selectedMessage.user?.profilePhoto || defaultAvatar} 
-                        alt="Remitente" 
-                        className="img-fluid rounded-circle"
-                      />
-                    </div>
+                  <div className="d-flex justify-content-between mb-3">
+                    <small className="text-muted">
+                      <i className="simple-icon-calendar mr-1"></i>
+                      {getFullDate(selectedMessage.dateSend)}
+                    </small>
                     
-                    <div>
-                      <h5 className="font-weight-bold mb-1">
-                        {selectedMessage.user ? `${selectedMessage.user.name} ${selectedMessage.user.lastName}` : 'Usuario desconocido'}
-                      </h5>
-                      <div className="text-muted">
-                        <i className="simple-icon-calendar mr-2"></i>
-                        {getFullDate(selectedMessage.dateSend)}
-                      </div>
-                      
-                      {selectedMessage.dateRead && (
-                        <div className="text-muted mt-1">
-                          <i className="simple-icon-check mr-2"></i>
-                          Leído el {getFullDate(selectedMessage.dateRead)}
-                        </div>
-                      )}
-                    </div>
+                    {selectedMessage.dateRead && (
+                      <small className="text-success">
+                        <i className="simple-icon-check mr-1"></i>
+                        Leído el {getFullDate(selectedMessage.dateRead)}
+                      </small>
+                    )}
                   </div>
                   
-                  <div className="message-content p-4 bg-light rounded">
-                    {selectedMessage.message.split('\n').map((line, idx) => (
+                  <div 
+                    className="p-3 bg-light rounded" 
+                    style={{ borderLeft: '4px solid #3e3cb7' }}
+                  >
+                    {selectedMessage.message?.split('\n').map((line: string, idx: number) => (
                       <p key={idx} className={idx > 0 ? 'mb-2' : ''}>
                         {line || <br />}
                       </p>
@@ -378,38 +369,36 @@ const InboxDetail = (props: InboxProps) => {
                 </ModalBody>
                 
                 <ModalFooter>
-                  <div className="d-flex justify-content-between w-100">
-                    <Button 
-                      color="danger" 
-                      outline
-                      onClick={() => deleteMessage(selectedMessage.id)}
-                    >
-                      <i className="simple-icon-trash mr-2"></i>
-                      Eliminar
-                    </Button>
-                    
-                    <div>
-                      {!selectedMessage.dateRead && (
-                        <Button 
-                          color="success" 
-                          className="mr-2"
-                          onClick={() => {
-                            markAsRead(selectedMessage);
-                            setViewModalOpen(false);
-                          }}
-                        >
-                          <i className="simple-icon-check mr-2"></i>
-                          Marcar como leído
-                        </Button>
-                      )}
-                      
+                  <Button 
+                    color="danger" 
+                    outline
+                    onClick={() => {
+                      deleteMessage(selectedMessage.id);
+                      setViewModalOpen(false);
+                    }}
+                  >
+                    <i className="simple-icon-trash mr-2"></i>
+                    Eliminar
+                  </Button>
+                  
+                  <div>
+                    {!selectedMessage.dateRead && (
                       <Button 
-                        color="primary" 
-                        onClick={() => setViewModalOpen(false)}
+                        color="success" 
+                        className="mr-2"
+                        onClick={() => markAsRead(selectedMessage)}
                       >
-                        Cerrar
+                        <i className="simple-icon-check mr-2"></i>
+                        Marcar como leído
                       </Button>
-                    </div>
+                    )}
+                    
+                    <Button 
+                      color="primary" 
+                      onClick={() => setViewModalOpen(false)}
+                    >
+                      Cerrar
+                    </Button>
                   </div>
                 </ModalFooter>
               </>
@@ -421,14 +410,15 @@ const InboxDetail = (props: InboxProps) => {
   );
 };
 
+// Esta es la sección crítica para conectar con Redux y obtener loginReducer
+const mapStateToProps = ({ loginReducer }: any) => {
+  return { loginReducer };
+};
+
 const mapDispatchToProps = { 
   ...inboxActions,
   getListSomeNotification: notificationActions.getListSomeNotification,
   updateNotification: notificationActions.updateNotification
-};
-
-const mapStateToProps = ({ loginReducer }: any) => {
-  return { loginReducer };
 };
 
 export default connect(mapStateToProps, mapDispatchToProps)(InboxDetail);
