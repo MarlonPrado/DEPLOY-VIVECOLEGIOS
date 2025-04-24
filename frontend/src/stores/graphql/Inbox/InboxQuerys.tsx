@@ -56,9 +56,31 @@ export const QUERY_GET_DROPDOWNS_INBOX = gql`
           id
           name
           lastName
+          active
+          phone
+          role {
+            id
+          } 
         }
       }
     }
   }
 `;
 
+export const QUERY_GET_DROPDOWNS_INBOX2 = gql`
+  query getDropdownsInbox {
+    dataUsers: getAllUser(allData: true, orderCreated: true) {
+      edges {
+        node {
+          id
+          name
+          lastName
+          active
+          role {
+            id
+          } 
+        }
+      }
+    }
+  }
+`;

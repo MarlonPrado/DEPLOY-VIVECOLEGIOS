@@ -38,7 +38,7 @@ interface InboxProps {
 const Inbox = (props: InboxProps) => {
   const [loading, setLoading] = useState(true);
   const [notifications, setInboxs] = useState<InboxMessage[]>([]);
-  const [modalOpen, setModalOpen] = useState(false);  
+  const [modalOpen, setModalOpen] = useState(true);  
 
   // Efecto para cargar los mensajes iniciales
   useEffect(() => {

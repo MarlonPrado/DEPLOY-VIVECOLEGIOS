@@ -262,6 +262,14 @@ const SpreadsheetList = (props: any) => {
     sheet: 'Planilla General'
   })
 
+  ///CONSTRUCCION
+ // const { onDownloadPDF } = useDownloadExcel({
+   // currentTableRef: tableRef.current,
+    //filename: 'Planilla General',
+    //sheet: 'Planilla General'
+  //})
+
+
   return (
     <>
       <div className="mt-4 d-flex justify-content-center align-items-center">

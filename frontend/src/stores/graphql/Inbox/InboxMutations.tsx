@@ -15,3 +15,9 @@ export const MUTATION_UPDATE_INBOX = gql`
     }
   }
 `;
+
+export const MUTATION_DELETE_USER = gql`
+  mutation deleteInbox($id: String!) {
+    delete: deleteInbox(id: $id)
+  }
+`;

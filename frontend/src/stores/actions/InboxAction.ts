@@ -1,6 +1,6 @@
 import { createNotification } from '../../helpers/Notification';
 import { client } from '../graphql';
-import { MUTATION_CREATE_INBOX, MUTATION_UPDATE_INBOX } from '../graphql/Inbox/InboxMutations';
+import { MUTATION_CREATE_INBOX, MUTATION_UPDATE_INBOX, MUTATION_DELETE_USER } from '../graphql/Inbox/InboxMutations';
 import { QUERY_GET_ALL_INBOX, QUERY_GET_DROPDOWNS_INBOX, QUERY_GET_SOME_INBOX } from '../graphql/Inbox/InboxQuerys';
 
 
