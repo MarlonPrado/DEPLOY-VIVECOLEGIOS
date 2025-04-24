@@ -1,16 +1,28 @@
-import moment from 'moment';
 import React, { useEffect, useState } from 'react';
-import { Loader } from '../../common/Loader';
-import PerfectScrollbar from 'react-perfect-scrollbar';
 import { connect } from 'react-redux';
-import { Button } from 'reactstrap';
-import ProfileImg from '../../../assets/img/profiles/l-1.jpg';
+import { 
+  Button, 
+  Card, 
+  CardBody, 
+  Badge, 
+  Modal, 
+  ModalHeader, 
+  ModalBody, 
+  ModalFooter,
+  Row,
+  Col
+} from 'reactstrap';
+import moment from 'moment';
+import 'moment/locale/es';
+import { Loader } from '../../common/Loader';
 import IntlMessages from '../../../helpers/IntlMessages';
 import * as inboxActions from '../../../stores/actions/InboxAction';
 import * as notificationActions from '../../../stores/actions/NotificationAction';
 import { Colxx } from '../../common/CustomBootstrap';
 import InboxCreate from './InboxCreate';
+import { createNotification } from '../../../helpers/Notification';
 import svgEmpty from '../../../assets/img/svg/scene-inbox-empty.svg';
+import defaultAvatar from '../../../assets/img/profiles/l-1.jpg';
 
 // Definir interfaces para mejorar la tipificación
 interface InboxMessage {
@@ -22,6 +34,7 @@ interface InboxMessage {
   user?: {
     name: string;
     lastName: string;
+    profilePhoto?: string;
   };
 }
 
@@ -31,213 +44,377 @@ interface InboxProps {
   };
   getListAllInbox: (userId: string) => Promise<any>;
   updateInbox: (data: any, id: string) => Promise<any>;
+  deleteInbox: (id: string) => Promise<any>;
   getListSomeNotification?: (userId: string) => Promise<any>;
   updateNotification?: (data: any, id: string) => Promise<any>;
 }
 
-const Inbox = (props: InboxProps) => {
+const InboxDetail = (props: InboxProps) => {
   const [loading, setLoading] = useState(true);
-  const [notifications, setInboxs] = useState<InboxMessage[]>([]);
-  const [modalOpen, setModalOpen] = useState(true);  
-
+  const [messages, setMessages] = useState<InboxMessage[]>([]);
+  const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [viewModalOpen, setViewModalOpen] = useState(false);
+  const [selectedMessage, setSelectedMessage] = useState<InboxMessage | null>(null);
+  
   // Efecto para cargar los mensajes iniciales
   useEffect(() => {
-    try {
-      props.getListAllInbox(props?.loginReducer?.userId).then((listData: any) => {
-        if (listData && Array.isArray(listData)) {
-          setInboxs(
-            listData.map((c: any) => c.node)
-          );
-        } else {
-          console.error("Formato de datos incorrecto:", listData);
-          setInboxs([]);
-        }
-        setLoading(false);
-      }).catch((error: Error) => { // Aquí está la corrección del error TS7006
-        console.error("Error al cargar mensajes:", error);
-        setInboxs([]);
-        setLoading(false);
-      });
-    } catch (error: unknown) { // También corrección aquí
-      console.error("Error general:", error);
-      setInboxs([]);
-      setLoading(false);
-    }
+    loadMessages();
+    // Configurar locale español para moment
+    moment.locale('es');
   }, []);
 
-  // Función para actualizar la lista de mensajes
-  const getInboxs = async () => {
+  // Función para cargar mensajes
+  const loadMessages = async () => {
+    setLoading(true);
     try {
       const listData = await props.getListAllInbox(props?.loginReducer?.userId);
       
       if (listData && Array.isArray(listData)) {
-        setInboxs(
-          listData.map((c: any) => c.node)
-        );
+        setMessages(listData.map((c: any) => c.node));
       } else {
-        console.error("Formato de datos incorrecto en actualización:", listData);
-        // No actualizamos el estado para mantener los mensajes existentes
+        console.error("Formato de datos incorrecto:", listData);
+        setMessages([]);
       }
-    } catch (error: unknown) {
-      console.error("Error al actualizar mensajes:", error);
-      // No actualizamos el estado para mantener los mensajes existentes
+    } catch (error) {
+      console.error("Error al cargar mensajes:", error);
+      setMessages([]);
+    } finally {
+      setLoading(false);
     }
   };
 
+  // Función para ver el mensaje completo
+  const viewFullMessage = (message: InboxMessage) => {
+    setSelectedMessage(message);
+    setViewModalOpen(true);
+  };
+
   // Función para marcar un mensaje como leído
-  const markAsRead = async (item: InboxMessage) => {
+  const markAsRead = async (message: InboxMessage) => {
     try {
-  
-      await props.updateInbox({ dateRead: new Date() }, item.id);
+      // No mostrar acción si ya está leído
+      if (message.dateRead) {
+        return;
+      }
+
+      // Actualizar el mensaje
+      await props.updateInbox({ dateRead: new Date() }, message.id);
       
-    
+      // Actualizar notificaciones relacionadas
       if (props.getListSomeNotification && props.updateNotification) {
         try {
-          // Buscar notificaciones actuales del usuario
           const notifications = await props.getListSomeNotification(props.loginReducer.userId);
           
-          // Filtrar las que coincidan con el título del mensaje (aproximación)
-          const matchingNotifications = notifications?.filter((n: any) => 
-            n.node.title?.includes(item.title) || 
-            (n.node.message && item.message && n.node.message.includes(item.message))
-          );
-          
-          // Chulear el leido e actualizar pestaña
-          if (matchingNotifications && matchingNotifications.length > 0) {
-            const updatePromises = matchingNotifications.map((n: any) =>
-              props.updateNotification({ dateRead: new Date() }, n.node.id)
-            );
-            await Promise.all(updatePromises);
+          if (notifications && Array.isArray(notifications)) {
+            for (let item of notifications) {
+              // Buscar notificaciones relacionadas con este mensaje
+              if (item.node.entityId === message.id) {
+                await props.updateNotification({ dateRead: new Date() }, item.node.id);
+              }
+            }
           }
         } catch (notificationError) {
-          console.warn("No se pudieron actualizar las notificaciones relacionadas:", notificationError);
+          console.warn("Error actualizando notificaciones:", notificationError);
         }
       }
       
-      // 3. Actualizar UI
-      await getInboxs();
-
-      // 4. Forzar actualización programática del contador
-      // Esta es la solución más simple pero menos elegante
-      setTimeout(() => {
-        // Guarda la posición del scroll
-        const scrollPosition = window.scrollY;
-        
-        // Recarga la página pero mantiene la posición del scroll
-        window.location.reload();
-        
-        // Se puede almacenar la posición en sessionStorage para recuperarla después
-        sessionStorage.setItem('scrollPosition', scrollPosition.toString());
-        
-        // Después del reload, en useEffect del componente:
-        // const savedPosition = sessionStorage.getItem('scrollPosition');
-        // if (savedPosition) window.scrollTo(0, parseInt(savedPosition));
-      }, 500); // Pequeño retraso para que se guarden los cambios
+      // Mostrar notificación de éxito
+      createNotification('success', 'Mensaje actualizado', 'El mensaje ha sido marcado como leído');
+      
+      // Actualizar UI
+      await loadMessages();
     } catch (error) {
       console.error("Error al marcar como leído:", error);
+      createNotification('error', 'Error', 'No se pudo marcar el mensaje como leído');
     }
+  };
+
+  // Función para eliminar un mensaje
+  const deleteMessage = async (id: string) => {
+    try {
+      await props.deleteInbox(id);
+      
+      // Cerrar modal si está abierto
+      if (viewModalOpen && selectedMessage?.id === id) {
+        setViewModalOpen(false);
+        setSelectedMessage(null);
+      }
+      
+      // Mostrar notificación de éxito
+      createNotification('success', 'Mensaje eliminado', 'El mensaje ha sido eliminado correctamente');
+      
+      // Actualizar lista de mensajes
+      await loadMessages();
+    } catch (error) {
+      console.error("Error al eliminar mensaje:", error);
+      createNotification('error', 'Error', 'No se pudo eliminar el mensaje');
+    }
+  };
+
+  // Formato relativo de fechas (hace 2 días, etc)
+  const getRelativeTime = (dateString: string) => {
+    return moment(dateString).fromNow();
+  };
+  
+  // Formato completo de fecha
+  const getFullDate = (dateString: string) => {
+    return moment(dateString).format('D [de] MMMM [de] YYYY, HH:mm');
+  };
+
+  // Renderizar tarjeta individual de mensaje
+  const renderMessageCard = (message: InboxMessage, index: number) => {
+    const isUnread = !message.dateRead;
+    const senderName = message.user ? `${message.user.name} ${message.user.lastName}` : 'Usuario desconocido';
+    const profileImage = message.user?.profilePhoto || defaultAvatar;
+    
+    // Truncar mensaje a 100 caracteres
+    const truncatedMessage = message.message?.length > 100
+      ? `${message.message.substring(0, 100)}...`
+      : message.message;
+    
+    return (
+      <Colxx xxs="12" md="6" xl="4" key={message.id || index} className="mb-4">
+        <Card 
+          className={`inbox-card shadow-sm ${isUnread ? 'border-left-accent' : ''}`}
+          style={{ cursor: 'pointer' }}
+          onClick={() => viewFullMessage(message)}
+        >
+          <CardBody className="d-flex flex-column">
+            <div className="d-flex mb-3">
+              <div className="user-avatar mr-2">
+                <img 
+                  src={profileImage} 
+                  alt={senderName}
+                  className="img-fluid rounded-circle"
+                />
+              </div>
+              <div className="d-flex flex-column flex-grow-1">
+                <div className="d-flex justify-content-between align-items-center">
+                  <h6 className="m-0 font-weight-bold">{senderName}</h6>
+                  {isUnread && (
+                    <Badge color="primary" pill className="font-weight-bold ml-1">
+                      Nuevo
+                    </Badge>
+                  )}
+                </div>
+                <span className="text-muted small">
+                  {getRelativeTime(message.dateSend)}
+                </span>
+              </div>
+            </div>
+            
+            <h6 className="message-title font-weight-bold mb-1">
+              {message.title || 'Sin título'}
+            </h6>
+            
+            <p className="message-preview text-muted flex-grow-1">
+              {truncatedMessage || 'Sin contenido'}
+            </p>
+            
+            <div className="d-flex justify-content-between mt-2 pt-2 border-top">
+              <Button 
+                color="outline-primary" 
+                size="sm" 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  viewFullMessage(message);
+                }}
+                className="btn-icon"
+                title="Ver mensaje completo"
+              >
+                <i className="simple-icon-eye mr-1"></i>
+                <span className="d-none d-sm-inline">Ver</span>
+              </Button>
+              
+              <Button 
+                color="outline-success" 
+                size="sm" 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  markAsRead(message);
+                }}
+                disabled={!isUnread}
+                className="btn-icon"
+                title="Marcar como leído"
+              >
+                <i className="simple-icon-check mr-1"></i>
+                <span className="d-none d-sm-inline">Leído</span>
+              </Button>
+              
+              <Button 
+                color="outline-danger" 
+                size="sm" 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  deleteMessage(message.id);
+                }}
+                className="btn-icon"
+                title="Eliminar mensaje"
+              >
+                <i className="simple-icon-trash mr-1"></i>
+                <span className="d-none d-sm-inline">Eliminar</span>
+              </Button>
+            </div>
+          </CardBody>
+        </Card>
+      </Colxx>
+    );
   };
 
   return (
     <>
+      <Row className="mb-4">
+        <Colxx xxs="12" className="d-flex justify-content-between align-items-center">
+          <h1 className="m-0">
+            <i className="iconsminds-mail mr-2"></i>
+            <IntlMessages id="menu.inbox" />
+          </h1>
+          <Button
+            color="primary"
+            size="lg"
+            className="btn-shadow"
+            onClick={() => setCreateModalOpen(!createModalOpen)}
+          >
+            <i className="simple-icon-plus mr-2"></i>
+            <IntlMessages id="pages.newMessage" />
+          </Button>
+        </Colxx>
+      </Row>
+
+      <div className="separator mb-5"></div>
+      
+      {/* Pantalla de carga */}
       {loading ? (
-        <>
-          <Colxx sm={12} className="d-flex justify-content-center">
-            <Loader/>
-          </Colxx>
-        </>
+        <div className="loading-container d-flex align-items-center justify-content-center py-5">
+          <Loader />
+        </div>
       ) : (
         <>
-          <div className="row mb-3 mr-2 d-flex justify-content-end">
-            <Button
-              color="primary"
-              size="lg"
-              className="top-right-button"
-              onClick={() => setModalOpen(!modalOpen)}
-              disabled={false}
-
-            >
-              <IntlMessages id="pages.newMessage" />
-            </Button>
-          </div>        
-          <div className="row">
-            <div className="col-12 chat-app">
-              <div className="scroll">
-                <PerfectScrollbar options={{ suppressScrollX: true, wheelPropagation: false }}>
-                  {notifications.length > 0 ? (
-                    <>
-                      {notifications.map((item: InboxMessage, index: number) => (
-                        <React.Fragment key={item.id || index}>
-                          <div className="clearfix"></div>
-                          <div className="card d-inline-block mb-3 float-left mr-2 w-100">
-                            <div className="position-absolute pt-1 pr-2 r-0">
-                              <span className="text-extra-small text-muted">
-                                {item?.dateSend ? moment(item.dateSend).format('YYYY-MM-DD h:mm a') : ''}
-                              </span>
-                            </div>
-                            <div className="card-body">
-                              <div className="d-flex flex-row">
-                                <span className="d-flex">
-                                  <img
-                                    alt="Profile Picture"
-                                    src={ProfileImg}
-                                    className="img-thumbnail border-0 rounded-circle mr-3 list-thumbnail align-self-center xsmall"
-                                  />
-                                </span>
-                                <div className="d-flex flex-grow-1 min-width-zero">
-                                  <div className="m-2 pl-0 align-self-center d-flex flex-column flex-lg-row justify-content-between min-width-zero">
-                                    <div className="min-width-zero">
-                                      <p
-                                        className={`mb-0 truncate list-item-heading ${
-                                          item.dateRead ? '' : 'font-bold'
-                                        }`}
-                                      >
-                                        <span>
-                                          {item?.user?.name || 'Usuario'} {item?.user?.lastName || ''}
-                                        </span>
-                                      </p>
-                                    </div>
-                                    {!item.dateRead && (
-                                      <span
-                                        className="ml-2 badge badge-info cursor-pointer"
-                                        onClick={() => markAsRead(item)}
-                                      >
-                                        <IntlMessages id="info.markAsRead" />
-                                      </span>
-                                    )}
-                                  </div>
-                                </div>
-                              </div>
-                              <div className="chat-text-left">
-                                <p
-                                  className={`mb-0 text-semi-muted ${
-                                    item.dateRead ? '' : 'font-bold'
-                                  }`}
-                                >
-                                  {item.title || 'Sin título'}: {item?.message || 'Sin mensaje'}
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-                        </React.Fragment>
-                      ))}
-                    </>
-                  ) : (
-                    <div className='d-flex align-items-center justify-content-center flex-column'>               
-                      <img className="card-img-left w-30" src={svgEmpty} alt="Card cap" />
-                      <h4 className='font-bold mt-4 mb-1'>Sin registros</h4>
-                      <span className='font-bold text-muted'>No se encontraron mensajes</span>
-                    </div>
-                  )}
-                </PerfectScrollbar>
-              </div>
-            </div>
-          </div>
+          {/* Mensajes o estado vacío */}
+          {messages.length > 0 ? (
+            <Row>
+              {messages.map((message, index) => renderMessageCard(message, index))}
+            </Row>
+          ) : (
+            <Card className="text-center p-5">
+              <CardBody>
+                <img 
+                  src={svgEmpty} 
+                  alt="Sin mensajes" 
+                  className="img-fluid mb-4" 
+                  style={{ maxWidth: '250px' }} 
+                />
+                <h3 className="font-weight-bold mb-3">Tu bandeja está vacía</h3>
+                <p className="text-muted mb-4">
+                  Aún no tienes mensajes. Cuando recibas uno, aparecerá aquí.
+                </p>
+                <Button 
+                  color="outline-primary" 
+                  size="lg"
+                  onClick={() => setCreateModalOpen(true)}
+                >
+                  <i className="simple-icon-plus mr-2"></i>
+                  Enviar un mensaje
+                </Button>
+              </CardBody>
+            </Card>
+          )}
+          
+          {/* Modal para crear mensaje nuevo */}
           <InboxCreate
-            modalOpen={modalOpen}
-            getInboxs={getInboxs}
-            toggleModal={() => setModalOpen(!modalOpen)}
+            modalOpen={createModalOpen}
+            getInboxs={loadMessages}
+            toggleModal={() => setCreateModalOpen(!createModalOpen)}
           />
+          
+          {/* Modal para ver mensaje completo */}
+          <Modal
+            isOpen={viewModalOpen}
+            toggle={() => setViewModalOpen(!viewModalOpen)}
+            size="lg"
+            className="modal-message"
+          >
+            {selectedMessage && (
+              <>
+                <ModalHeader toggle={() => setViewModalOpen(false)}>
+                  {selectedMessage.title || 'Sin título'}
+                </ModalHeader>
+                
+                <ModalBody>
+                  <div className="message-header mb-4 d-flex align-items-center">
+                    <div className="user-avatar-lg mr-3">
+                      <img 
+                        src={selectedMessage.user?.profilePhoto || defaultAvatar} 
+                        alt="Remitente" 
+                        className="img-fluid rounded-circle"
+                      />
+                    </div>
+                    
+                    <div>
+                      <h5 className="font-weight-bold mb-1">
+                        {selectedMessage.user ? `${selectedMessage.user.name} ${selectedMessage.user.lastName}` : 'Usuario desconocido'}
+                      </h5>
+                      <div className="text-muted">
+                        <i className="simple-icon-calendar mr-2"></i>
+                        {getFullDate(selectedMessage.dateSend)}
+                      </div>
+                      
+                      {selectedMessage.dateRead && (
+                        <div className="text-muted mt-1">
+                          <i className="simple-icon-check mr-2"></i>
+                          Leído el {getFullDate(selectedMessage.dateRead)}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div className="message-content p-4 bg-light rounded">
+                    {selectedMessage.message.split('\n').map((line, idx) => (
+                      <p key={idx} className={idx > 0 ? 'mb-2' : ''}>
+                        {line || <br />}
+                      </p>
+                    ))}
+                  </div>
+                </ModalBody>
+                
+                <ModalFooter>
+                  <div className="d-flex justify-content-between w-100">
+                    <Button 
+                      color="danger" 
+                      outline
+                      onClick={() => deleteMessage(selectedMessage.id)}
+                    >
+                      <i className="simple-icon-trash mr-2"></i>
+                      Eliminar
+                    </Button>
+                    
+                    <div>
+                      {!selectedMessage.dateRead && (
+                        <Button 
+                          color="success" 
+                          className="mr-2"
+                          onClick={() => {
+                            markAsRead(selectedMessage);
+                            setViewModalOpen(false);
+                          }}
+                        >
+                          <i className="simple-icon-check mr-2"></i>
+                          Marcar como leído
+                        </Button>
+                      )}
+                      
+                      <Button 
+                        color="primary" 
+                        onClick={() => setViewModalOpen(false)}
+                      >
+                        Cerrar
+                      </Button>
+                    </div>
+                  </div>
+                </ModalFooter>
+              </>
+            )}
+          </Modal>
         </>
       )}
     </>
@@ -254,4 +431,4 @@ const mapStateToProps = ({ loginReducer }: any) => {
   return { loginReducer };
 };
 
-export default connect(mapStateToProps, mapDispatchToProps)(Inbox);
+export default connect(mapStateToProps, mapDispatchToProps)(InboxDetail);

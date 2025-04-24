@@ -1,6 +1,6 @@
 import { createNotification } from '../../helpers/Notification';
 import { client } from '../graphql';
-import { MUTATION_CREATE_INBOX, MUTATION_UPDATE_INBOX, MUTATION_DELETE_USER } from '../graphql/Inbox/InboxMutations';
+import { MUTATION_CREATE_INBOX, MUTATION_UPDATE_INBOX, MUTATION_DELETE_INBOX } from '../graphql/Inbox/InboxMutations';
 import { QUERY_GET_ALL_INBOX, QUERY_GET_DROPDOWNS_INBOX, QUERY_GET_SOME_INBOX } from '../graphql/Inbox/InboxQuerys';
 
 
@@ -140,3 +140,38 @@ export const getDropdownsInbox = () => {
   };
 };
 
+export const deleteInbox = (id: any, showToast: boolean) => {
+  return async (dispatch: any) => {
+    try {
+      let dataDelete = null;
+      await client
+        .mutate({
+          mutation: MUTATION_DELETE_INBOX,
+          variables: { id },
+        })
+        .then((dataReponse: any) => {
+          if (dataReponse.errors?.length > 0) {
+            dataReponse.errors.forEach((error: any) => {
+              if(showToast){
+                createNotification('error', 'error', '');
+              }
+            });
+          } else {
+            dataDelete = dataReponse.data;
+            if(showToast){
+            createNotification('success', 'success', '');
+            }
+          }
+        });
+      return dataDelete as any;
+    } catch (error) {
+      if(showToast){
+      createNotification('error', 'error', '');
+      }
+      return error;
+    }
+  };
+};
+
+
+ 
