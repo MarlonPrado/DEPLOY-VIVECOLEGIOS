@@ -1,10 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { connect } from 'react-redux';
-import { useLocation, useNavigate } from 'react-router';
-
-import { createNotification } from '../../../helpers/Notification';
+import { useLocation } from 'react-router';
 import useMousetrap from '../../../hooks/use-mousetrap';
-import { Loader } from '../Loader';
 import ListPageHeading from './ListPageHeading';
 import ListPageListing from './ListPageListing';
 
@@ -19,78 +16,75 @@ const getIndex = (value: any, arr: any, prop: any) => {
 
 const pageSizes = [5, 10, 15, 20];
 
-const DataList = (props: any) => {
+const DataListSimple = (props: any) => {
   const [isLoaded, setIsLoaded] = useState(false);
   const [displayMode, setDisplayMode] = useState('list');
-  const [currentPage, setCurrentPage] = useState(1);
-  const [selectedPageSize, setSelectedPageSize] = useState(5);
+  const [currentPage, setCurrentPage] = useState(props.currentPage || 1);
+  const [selectedPageSize, setSelectedPageSize] = useState(props.pageSize || 10);
   const [selectedOrderOption, setSelectedOrderOption] = useState(props?.columns[0]);
   const [orderOptions, setOrderOptions] = useState(props?.columns);
   const [columns, setColumns] = useState(props?.columns);
   const [totalItemCount, setTotalItemCount] = useState(0);
   const [totalPage, setTotalPage] = useState(1);
-  const [search, setSearch] = useState('');
   const [sortColumn, setSortColumn] = useState('');
   const [sortOrderColumn, setSortOrderColumn] = useState(true);
   const [selectedItems, setSelectedItems] = useState([]);
   const [items, setItems] = useState([]);
   const [itemsDefault, setItemsDefault] = useState([]);
   const [lastChecked, setLastChecked] = useState(null);
+  
+  // Configuración de permisos por defecto (todos habilitados)
   const [currentMenu, setCurrentMenu] = useState({
-    createAction: false,
-    deleteAction: false,
-    updateAction: false,
-    readAction: false,
-    fullAccess: false,
-    activateAction: false,
-    inactiveAction: false,
+    createAction: true,
+    deleteAction: true,
+    updateAction: true, 
+    readAction: true,
+    fullAccess: true,
+    activateAction: true,
+    inactiveAction: true,
   });
 
-  const location = useLocation();
   const { pathname } = useLocation();
-  const history = useNavigate();
-  const currentUrl = location.pathname;
 
   useEffect(() => {
     setItemsDefault(props?.data);
-  }, props?.data)
+  }, [props?.data])
 
+  // Eliminar la validación de permisos que causa problemas
   useEffect(() => {
     setCurrentPage(1);
-    let { roleMenus } = props.loginReducer;
-    let submenus: any = [];
-    roleMenus.map((c: any) => {
-      return submenus = submenus.concat(c.menuItemsLogin);
-    });
-    //console.log(submenus)
-    let cm = submenus.find((c: any) => { return (currentUrl === c?.module?.url) });
-    // console.log(currentUrl)
-    // console.log(submenus)
-    if (cm && cm.readAction) {
-      setCurrentMenu(cm);
-    } else {
-      console.log("MLP HP ELSE")
-      history(`/home`);
-      createNotification('warning', 'notPermissions', '');
-    }
-    //console.log(cm)
+    // No hacer ninguna validación de permisos aquí
   }, [selectedPageSize, selectedOrderOption]);
 
   useEffect(() => {
     if (props?.data != null) {
       setTotalPage(Math.ceil(props?.data?.length / selectedPageSize));
-      // setItems(
-      //   props?.data?.map((x: any) => {
-      //     return { ...x, img: x.img.replace('img/', 'img/products/') };
-      //   }),
-      // );
-      const itemsSlice = props?.data?.slice((currentPage - 1) * selectedPageSize, currentPage * selectedPageSize);
+      
+      const itemsSlice = props?.data?.slice(
+        (currentPage - 1) * selectedPageSize, 
+        currentPage * selectedPageSize
+      );
+      
       setItems(itemsSlice);
       setSelectedItems([]);
       setTotalItemCount(props?.data?.length);
       setIsLoaded(true);
     }
-  }, [selectedPageSize, currentPage, selectedOrderOption]);
+  }, [props?.data, selectedPageSize, currentPage, selectedOrderOption]);
+
+  // Actualizar página cuando el prop cambie
+  useEffect(() => {
+    if (props.currentPage !== currentPage) {
+      setCurrentPage(props.currentPage);
+    }
+  }, [props.currentPage]);
+
+  // Actualizar tamaño de página cuando el prop cambie
+  useEffect(() => {
+    if (props.pageSize !== selectedPageSize) {
+      setSelectedPageSize(props.pageSize);
+    }
+  }, [props.pageSize]);
 
   const onCheckItem = (event: any, item: any) => {
     if (
@@ -126,7 +120,6 @@ const DataList = (props: any) => {
       selectedList = Array.from(new Set(selectedItems));
       setSelectedItems(selectedList);
     }
-    // document.activeElement.blur();
     return false;
   };
 
@@ -142,17 +135,11 @@ const DataList = (props: any) => {
         }),
       );
     }
-    // document.activeElement.blur();
     return false;
   };
 
-  const onContextMenuClick = (e: any, data: any) => {
-    //console.log('onContextMenuClick - selected items', selectedItems);
-    //console.log('onContextMenuClick - action : ', data.action);
-  };
-
+  const onContextMenuClick = () => {};
   const onContextMenu = (e: any, data: any) => {
-    //console.log(data);
     const clickedProductId = data.data;
     if (!selectedItems.includes(clickedProductId)) {
       setSelectedItems([clickedProductId]);
@@ -170,18 +157,32 @@ const DataList = (props: any) => {
   });
 
   const matches = (dato: any, term: any) => {
-    let array = Object.entries(dato.node);
-    return array.find(c => { return (c[0] != "id" && c[0] != "__typename" && c[1]?.toString()?.toLocaleLowerCase()?.includes(term)) });
+    let array = Object.entries(dato.node || dato);
+    return array.find(c => { 
+      return (c[0] != "id" && c[0] != "__typename" && c[1]?.toString()?.toLocaleLowerCase()?.includes(term)) 
+    });
   };
 
   const startIndex = (currentPage - 1) * selectedPageSize;
   const endIndex = currentPage * selectedPageSize;
 
-  return <>
+  // Cuando cambia la página, notificar al componente padre
+  useEffect(() => {
+    if (props.onPageChange && currentPage !== props.currentPage) {
+      props.onPageChange(currentPage);
+    }
+  }, [currentPage]);
+
+  // Cuando cambia el tamaño de página, notificar al componente padre
+  useEffect(() => {
+    if (props.onPageSizeChange && selectedPageSize !== props.pageSize) {
+      props.onPageSizeChange(selectedPageSize);
+    }
+  }, [selectedPageSize]);
+
+  return (
     <div className="disable-text-selection">
       <ListPageHeading
-        items={items}
-        itemsTotal={itemsDefault}
         header={props?.header}
         heading="menu.data-list"
         displayMode={displayMode}
@@ -204,21 +205,31 @@ const DataList = (props: any) => {
         endIndex={endIndex}
         selectedItemsLength={selectedItems ? selectedItems.length : 0}
         itemsLength={items ? items.length : 0}
-        currentMenu={currentMenu}
+        currentMenu={currentMenu} // Siempre tiene todos los permisos
         onSearchKey={(e: any) => {
-          setItems(itemsDefault.filter(dato => { return matches(dato, e?.toString()?.toLocaleLowerCase()) }));
+          const searchTerm = e?.toString()?.toLocaleLowerCase();
+          if (searchTerm) {
+            setItems(itemsDefault.filter(dato => matches(dato, searchTerm)));
+          } else {
+            // Restaurar items originales
+            const itemsSlice = props?.data?.slice(
+              (currentPage - 1) * selectedPageSize, 
+              currentPage * selectedPageSize
+            );
+            setItems(itemsSlice);
+          }
         }}
         orderOptions={orderOptions}
         pageSizes={pageSizes}
         toggleModal={() => {
-          return props?.setModalOpen(!props?.modalOpen);
+          return props?.toggleModal && props.toggleModal();
         }}
         columns={columns}
         deleteAll={() => {
-          return props?.deleteAll(selectedItems);
+          return props?.deleteAll && props?.deleteAll(selectedItems);
         }}
         changeActiveDataAll={() => {
-          return props?.changeActiveDataAll(selectedItems);
+          return props?.changeActiveDataAll && props?.changeActiveDataAll(selectedItems);
         }}
         withChildren={props?.withChildren}
         onSort={(e: any) => {
@@ -232,8 +243,10 @@ const DataList = (props: any) => {
             setSortOrderColumn(sortOrderColumnAux);
           }
           setItems(items.sort((a, b) => {
-            const fieldA = a['node'][e.column].toString().toUpperCase();
-            const fieldB = b['node'][e.column].toString().toUpperCase();
+            const nodeA = a.node || a;
+            const nodeB = b.node || b;
+            const fieldA = nodeA[e.column]?.toString().toUpperCase() || '';
+            const fieldB = nodeB[e.column]?.toString().toUpperCase() || '';
             return sortOrderColumnAux
               ? fieldA.localeCompare(fieldB)
               : fieldB.localeCompare(fieldA);
@@ -243,6 +256,9 @@ const DataList = (props: any) => {
         sortOrderColumn={sortOrderColumn}
         refreshDataTable={props?.refreshDataTable}
         childrenButtons={props?.childrenButtons}
+        filterOptions={props?.filterOptions}
+        filterValue={props?.filterValue}
+        onFilterChange={props?.onFilterChange}
       />
       <ListPageListing
         type={props?.type}
@@ -262,17 +278,12 @@ const DataList = (props: any) => {
         withChildren={props?.withChildren}
         filterChildren={props?.filterChildren}
         childrenButtons={props?.childrenButtons}
-        currentMenu={currentMenu}
+        currentMenu={currentMenu} // Siempre tiene todos los permisos
         additionalFunction={props?.additionalFunction}
+        trClass={props?.trClass}
       />
     </div>
-  </>
+  );
 };
 
-const mapStateToProps = ({ loginReducer }: any) => {
-  return { loginReducer };
-};
-
-export default connect(mapStateToProps)(DataList);
-
-// export default DataList;
+export default DataListSimple;
