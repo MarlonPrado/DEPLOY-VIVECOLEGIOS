@@ -1,289 +1,309 @@
 import React, { useEffect, useState } from 'react';
 import { connect } from 'react-redux';
-import { useLocation } from 'react-router';
-import useMousetrap from '../../../hooks/use-mousetrap';
-import ListPageHeading from './ListPageHeading';
-import ListPageListing from './ListPageListing';
-
-const getIndex = (value: any, arr: any, prop: any) => {
-  for (let i = 0; i < arr.length; i += 1) {
-    if (arr[i][prop] === value) {
-      return i;
-    }
-  }
-  return -1;
-};
-
-const pageSizes = [5, 10, 15, 20];
+import { Button, Card, CardBody, Input, InputGroup, Row, Table, Pagination, PaginationItem, PaginationLink, Badge, Dropdown, DropdownToggle, DropdownMenu, DropdownItem } from 'reactstrap';
+import { Colxx } from '../CustomBootstrap';
 
 const DataListSimple = (props: any) => {
-  const [isLoaded, setIsLoaded] = useState(false);
-  const [displayMode, setDisplayMode] = useState('list');
-  const [currentPage, setCurrentPage] = useState(props.currentPage || 1);
-  const [selectedPageSize, setSelectedPageSize] = useState(props.pageSize || 10);
-  const [selectedOrderOption, setSelectedOrderOption] = useState(props?.columns[0]);
-  const [orderOptions, setOrderOptions] = useState(props?.columns);
-  const [columns, setColumns] = useState(props?.columns);
-  const [totalItemCount, setTotalItemCount] = useState(0);
-  const [totalPage, setTotalPage] = useState(1);
-  const [sortColumn, setSortColumn] = useState('');
-  const [sortOrderColumn, setSortOrderColumn] = useState(true);
-  const [selectedItems, setSelectedItems] = useState([]);
-  const [items, setItems] = useState([]);
-  const [itemsDefault, setItemsDefault] = useState([]);
-  const [lastChecked, setLastChecked] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [data, setData] = useState<any[]>([]);
+  const [selectedItems, setSelectedItems] = useState<any[]>([]);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [filterDropdownOpen, setFilterDropdownOpen] = useState(false);
   
-  // Configuración de permisos por defecto (todos habilitados)
-  const [currentMenu, setCurrentMenu] = useState({
-    createAction: true,
-    deleteAction: true,
-    updateAction: true, 
-    readAction: true,
-    fullAccess: true,
-    activateAction: true,
-    inactiveAction: true,
-  });
-
-  const { pathname } = useLocation();
-
+  // Permisos de usuario
+  const userRole = props.loginReducer?.role?.name || '';
+  const canCreate = !['ESTUDIANTE', 'ACUDIENTE'].includes(userRole);
+  
   useEffect(() => {
-    setItemsDefault(props?.data);
-  }, [props?.data])
-
-  // Eliminar la validación de permisos que causa problemas
+    setData(props.data || []);
+  }, [props.data]);
+  
+  // Filtrado
   useEffect(() => {
-    setCurrentPage(1);
-    // No hacer ninguna validación de permisos aquí
-  }, [selectedPageSize, selectedOrderOption]);
-
-  useEffect(() => {
-    if (props?.data != null) {
-      setTotalPage(Math.ceil(props?.data?.length / selectedPageSize));
-      
-      const itemsSlice = props?.data?.slice(
-        (currentPage - 1) * selectedPageSize, 
-        currentPage * selectedPageSize
-      );
-      
-      setItems(itemsSlice);
-      setSelectedItems([]);
-      setTotalItemCount(props?.data?.length);
-      setIsLoaded(true);
-    }
-  }, [props?.data, selectedPageSize, currentPage, selectedOrderOption]);
-
-  // Actualizar página cuando el prop cambie
-  useEffect(() => {
-    if (props.currentPage !== currentPage) {
-      setCurrentPage(props.currentPage);
-    }
-  }, [props.currentPage]);
-
-  // Actualizar tamaño de página cuando el prop cambie
-  useEffect(() => {
-    if (props.pageSize !== selectedPageSize) {
-      setSelectedPageSize(props.pageSize);
-    }
-  }, [props.pageSize]);
-
-  const onCheckItem = (event: any, item: any) => {
-    if (
-      event.target.tagName === 'A' ||
-      (event.target.parentElement && event.target.parentElement.tagName === 'A')
-    ) {
-      return true;
-    }
-    if (lastChecked === null) {
-      setLastChecked(item.id);
-    }
-
-    let selectedList = [...selectedItems];
-    if (selectedItems.find((c: any) => { return (c.id === item.id) })) {
-      selectedList = selectedList.filter((x) => {
-        return x.id !== item.id;
+    if (searchTerm) {
+      const filtered = props.data?.filter((item: any) => {
+        const values = Object.values(item).join(' ').toLowerCase();
+        return values.includes(searchTerm.toLowerCase());
       });
+      setData(filtered || []);
     } else {
-      selectedList.push(item);
+      setData(props.data || []);
     }
-    setSelectedItems(selectedList);
-
-    if (event.shiftKey) {
-      let newItems = [...items];
-      const start = getIndex(item.id, newItems, 'id');
-      const end = getIndex(lastChecked, newItems, 'id');
-      newItems = newItems.slice(Math.min(start, end), Math.max(start, end) + 1);
-      selectedItems.push(
-        ...newItems.map((data) => {
-          return data.id;
-        }),
-      );
-      selectedList = Array.from(new Set(selectedItems));
-      setSelectedItems(selectedList);
+  }, [searchTerm, props.data]);
+  
+  // Paginación
+  const totalPages = Math.ceil((data?.length || 0) / pageSize);
+  const startIndex = (currentPage - 1) * pageSize;
+  const endIndex = Math.min(startIndex + pageSize, data?.length || 0);
+  const currentData = data?.slice(startIndex, endIndex) || [];
+  
+  // Renderizar celdas
+  const renderCell = (row: any, column: any) => {
+    if (column.render) {
+      return column.render(row);
     }
-    return false;
+    return row[column.column] || '';
   };
-
-  const handleChangeSelectAll = (isToggle: any) => {
-    if (selectedItems.length >= items.length) {
-      if (isToggle) {
-        setSelectedItems([]);
-      }
+  
+  // Selección múltiple
+  const toggleItemSelection = (item: any) => {
+    if (selectedItems.find(i => i.id === item.id)) {
+      setSelectedItems(selectedItems.filter(i => i.id !== item.id));
     } else {
-      setSelectedItems(
-        items.map((x) => {
-          return x.node;
-        }),
-      );
+      setSelectedItems([...selectedItems, item]);
     }
-    return false;
   };
-
-  const onContextMenuClick = () => {};
-  const onContextMenu = (e: any, data: any) => {
-    const clickedProductId = data.data;
-    if (!selectedItems.includes(clickedProductId)) {
-      setSelectedItems([clickedProductId]);
+  
+  // Seleccionar todos
+  const toggleSelectAll = () => {
+    if (selectedItems.length === currentData.length) {
+      setSelectedItems([]);
+    } else {
+      setSelectedItems([...currentData]);
     }
-    return true;
   };
-
-  useMousetrap(['ctrl+a', 'command+a'], () => {
-    handleChangeSelectAll(false);
-  });
-
-  useMousetrap(['ctrl+d', 'command+d'], () => {
-    setSelectedItems([]);
-    return false;
-  });
-
-  const matches = (dato: any, term: any) => {
-    let array = Object.entries(dato.node || dato);
-    return array.find(c => { 
-      return (c[0] != "id" && c[0] != "__typename" && c[1]?.toString()?.toLocaleLowerCase()?.includes(term)) 
-    });
+  
+  // Eliminación masiva
+  const handleDeleteSelected = () => {
+    if (window.confirm(`¿Está seguro que desea eliminar ${selectedItems.length} elementos?`)) {
+      selectedItems.forEach(item => {
+        props.deleteData && props.deleteData(item.id);
+      });
+      setSelectedItems([]);
+    }
   };
-
-  const startIndex = (currentPage - 1) * selectedPageSize;
-  const endIndex = currentPage * selectedPageSize;
-
-  // Cuando cambia la página, notificar al componente padre
-  useEffect(() => {
-    if (props.onPageChange && currentPage !== props.currentPage) {
-      props.onPageChange(currentPage);
-    }
-  }, [currentPage]);
-
-  // Cuando cambia el tamaño de página, notificar al componente padre
-  useEffect(() => {
-    if (props.onPageSizeChange && selectedPageSize !== props.pageSize) {
-      props.onPageSizeChange(selectedPageSize);
-    }
-  }, [selectedPageSize]);
-
+  
   return (
-    <div className="disable-text-selection">
-      <ListPageHeading
-        header={props?.header}
-        heading="menu.data-list"
-        displayMode={displayMode}
-        changeDisplayMode={setDisplayMode}
-        handleChangeSelectAll={handleChangeSelectAll}
-        changeOrderBy={(column: any) => {
-          setSelectedOrderOption(
-            orderOptions.find((x: any) => {
-              return x.column === column;
-            }),
-          );
-        }}
-        changePageSize={setSelectedPageSize}
-        selectedPageSize={selectedPageSize}
-        createActionDisabled={props?.createActionDisabled}
-        totalItemCount={totalItemCount}
-        selectedOrderOption={selectedOrderOption}
-        match={pathname}
-        startIndex={startIndex}
-        endIndex={endIndex}
-        selectedItemsLength={selectedItems ? selectedItems.length : 0}
-        itemsLength={items ? items.length : 0}
-        currentMenu={currentMenu} // Siempre tiene todos los permisos
-        onSearchKey={(e: any) => {
-          const searchTerm = e?.toString()?.toLocaleLowerCase();
-          if (searchTerm) {
-            setItems(itemsDefault.filter(dato => matches(dato, searchTerm)));
-          } else {
-            // Restaurar items originales
-            const itemsSlice = props?.data?.slice(
-              (currentPage - 1) * selectedPageSize, 
-              currentPage * selectedPageSize
-            );
-            setItems(itemsSlice);
-          }
-        }}
-        orderOptions={orderOptions}
-        pageSizes={pageSizes}
-        toggleModal={() => {
-          return props?.toggleModal && props.toggleModal();
-        }}
-        columns={columns}
-        deleteAll={() => {
-          return props?.deleteAll && props?.deleteAll(selectedItems);
-        }}
-        changeActiveDataAll={() => {
-          return props?.changeActiveDataAll && props?.changeActiveDataAll(selectedItems);
-        }}
-        withChildren={props?.withChildren}
-        onSort={(e: any) => {
-          let sortOrderColumnAux = sortOrderColumn;
-          if (e.column === sortColumn) {
-            sortOrderColumnAux = !sortOrderColumnAux;
-            setSortOrderColumn(sortOrderColumnAux);
-          } else {
-            setSortColumn(e.column);
-            sortOrderColumnAux = true;
-            setSortOrderColumn(sortOrderColumnAux);
-          }
-          setItems(items.sort((a, b) => {
-            const nodeA = a.node || a;
-            const nodeB = b.node || b;
-            const fieldA = nodeA[e.column]?.toString().toUpperCase() || '';
-            const fieldB = nodeB[e.column]?.toString().toUpperCase() || '';
-            return sortOrderColumnAux
-              ? fieldA.localeCompare(fieldB)
-              : fieldB.localeCompare(fieldA);
-          }));
-        }}
-        sortColumn={sortColumn}
-        sortOrderColumn={sortOrderColumn}
-        refreshDataTable={props?.refreshDataTable}
-        childrenButtons={props?.childrenButtons}
-        filterOptions={props?.filterOptions}
-        filterValue={props?.filterValue}
-        onFilterChange={props?.onFilterChange}
-      />
-      <ListPageListing
-        type={props?.type}
-        items={items}
-        displayMode={displayMode}
-        selectedItems={selectedItems}
-        onCheckItem={onCheckItem}
-        currentPage={currentPage}
-        totalPage={totalPage}
-        onContextMenuClick={onContextMenuClick}
-        onContextMenu={onContextMenu}
-        onChangePage={setCurrentPage}
-        columns={columns}
-        viewEditData={props?.viewEditData}
-        changeActiveData={props?.changeActiveData}
-        deleteData={props?.deleteData}
-        withChildren={props?.withChildren}
-        filterChildren={props?.filterChildren}
-        childrenButtons={props?.childrenButtons}
-        currentMenu={currentMenu} // Siempre tiene todos los permisos
-        additionalFunction={props?.additionalFunction}
-        trClass={props?.trClass}
-      />
-    </div>
+    <Card className="mb-4">
+      <CardBody>
+        <Row className="mb-3 align-items-center">
+          <Colxx xxs="6" sm="4" md="3" lg="2">
+            <h6 className="mb-1 text-muted">
+              Mostrando {startIndex + 1}-{endIndex} de {data.length}
+            </h6>
+          </Colxx>
+          
+          <Colxx xxs="6" sm="4" md="5" lg="5">
+            <InputGroup>
+              <Input 
+                placeholder="Buscar..." 
+                value={searchTerm}
+                onChange={e => setSearchTerm(e.target.value)}
+              />
+            </InputGroup>
+          </Colxx>
+
+          <Colxx xxs="12" sm="4" md="4" lg="5" className="d-flex justify-content-end mt-2 mt-sm-0">
+            {props.filterOptions && props.filterOptions.length > 0 && (
+              <Dropdown 
+                isOpen={filterDropdownOpen} 
+                toggle={() => setFilterDropdownOpen(!filterDropdownOpen)}
+                className="mr-2"
+              >
+                <DropdownToggle caret color="outline-primary" size="sm">
+                  {props.filterOptions.find((opt: any) => opt.value === props.filterValue)?.label || 'Filtrar'}
+                </DropdownToggle>
+                <DropdownMenu>
+                  {props.filterOptions.map((option: any) => (
+                    <DropdownItem 
+                      key={option.value} 
+                      onClick={() => props.onFilterChange(option.value)}
+                      active={props.filterValue === option.value}
+                    >
+                      {option.label}
+                    </DropdownItem>
+                  ))}
+                </DropdownMenu>
+              </Dropdown>
+            )}
+            
+            {selectedItems.length > 0 && (
+              <Button 
+                color="danger" 
+                size="sm" 
+                className="mr-2"
+                onClick={handleDeleteSelected}
+              >
+                Eliminar ({selectedItems.length})
+              </Button>
+            )}
+            
+            <Button 
+              color="primary" 
+              size="sm" 
+              className="mr-2" 
+              onClick={() => props.refreshDataTable && props.refreshDataTable()}
+            >
+              <i className="simple-icon-refresh" /> Actualizar
+            </Button>
+            
+            {canCreate && props.toggleModal && (
+              <Button 
+                color="primary" 
+                size="sm" 
+                onClick={props.toggleModal}
+              >
+                <i className="simple-icon-plus" /> Agregar Nuevo
+              </Button>
+            )}
+          </Colxx>
+        </Row>
+        
+        <Table hover responsive className="rounded">
+          <thead>
+            <tr>
+              <th className="w-10">
+                <div className="custom-control custom-checkbox">
+                  <input
+                    type="checkbox"
+                    className="custom-control-input"
+                    id="checkAll"
+                    checked={currentData.length > 0 && selectedItems.length === currentData.length}
+                    onChange={toggleSelectAll}
+                  />
+                  <label className="custom-control-label" htmlFor="checkAll"></label>
+                </div>
+              </th>
+              {props.columns.map((column: any, index: number) => (
+                <th key={index} style={{width: column.width || 'auto'}}>
+                  {column.label}
+                </th>
+              ))}
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {currentData.length === 0 ? (
+              <tr>
+                <td colSpan={props.columns.length + 2} className="text-center p-4">
+                  No hay datos disponibles
+                </td>
+              </tr>
+            ) : (
+              currentData.map((row: any) => {
+                // Aplicar clase personalizada a la fila si se proporciona
+                const trClass = props.trClass ? props.trClass(row) : '';
+                
+                return (
+                  <tr key={row.id} className={trClass}>
+                    <td>
+                      <div className="custom-control custom-checkbox">
+                        <input
+                          type="checkbox"
+                          className="custom-control-input"
+                          id={`check_${row.id}`}
+                          checked={!!selectedItems.find(i => i.id === row.id)}
+                          onChange={() => toggleItemSelection(row)}
+                        />
+                        <label className="custom-control-label" htmlFor={`check_${row.id}`}></label>
+                      </div>
+                    </td>
+                    {props.columns.map((column: any, index: number) => (
+                      <td key={index}>{renderCell(row, column)}</td>
+                    ))}
+                    <td>
+                      {props.actions && props.actions.map((action: any) => {
+                        // Verificar si la acción tiene una condición y si se cumple
+                        if (action.condition && !action.condition(row)) {
+                          return null;
+                        }
+                        
+                        return (
+                          <Button
+                            key={action.id}
+                            color={action.color || 'secondary'}
+                            size="sm"
+                            className="mr-1 mb-1"
+                            onClick={() => action.action(row)}
+                            title={action.label}
+                          >
+                            {action.icon && <i className={action.icon} />}
+                            {!action.icon && action.label}
+                          </Button>
+                        );
+                      })}
+                    </td>
+                  </tr>
+                );
+              })
+            )}
+          </tbody>
+        </Table>
+        
+        {totalPages > 1 && (
+          <Row className="mt-3">
+            <Colxx xxs="12">
+              <Pagination className="justify-content-center" listClassName="justify-content-center">
+                <PaginationItem disabled={currentPage === 1}>
+                  <PaginationLink first onClick={() => setCurrentPage(1)} />
+                </PaginationItem>
+                <PaginationItem disabled={currentPage === 1}>
+                  <PaginationLink previous onClick={() => setCurrentPage(currentPage - 1)} />
+                </PaginationItem>
+                
+                {Array.from({length: Math.min(5, totalPages)}, (_, i) => {
+                  let pageNum = currentPage;
+                  if (currentPage <= 3) {
+                    pageNum = i + 1;
+                  } else if (currentPage >= totalPages - 2) {
+                    pageNum = totalPages - 4 + i;
+                  } else {
+                    pageNum = currentPage - 2 + i;
+                  }
+                  
+                  if (pageNum <= totalPages && pageNum > 0) {
+                    return (
+                      <PaginationItem active={currentPage === pageNum} key={pageNum}>
+                        <PaginationLink onClick={() => setCurrentPage(pageNum)}>
+                          {pageNum}
+                        </PaginationLink>
+                      </PaginationItem>
+                    );
+                  }
+                  return null;
+                })}
+                
+                <PaginationItem disabled={currentPage === totalPages}>
+                  <PaginationLink next onClick={() => setCurrentPage(currentPage + 1)} />
+                </PaginationItem>
+                <PaginationItem disabled={currentPage === totalPages}>
+                  <PaginationLink last onClick={() => setCurrentPage(totalPages)} />
+                </PaginationItem>
+              </Pagination>
+            </Colxx>
+          </Row>
+        )}
+        
+        <Row className="mt-3">
+          <Colxx xxs="12" className="d-flex justify-content-center">
+            <Dropdown isOpen={dropdownOpen} toggle={() => setDropdownOpen(!dropdownOpen)}>
+              <DropdownToggle caret color="outline-primary" size="sm">
+                {pageSize} por página
+              </DropdownToggle>
+              <DropdownMenu>
+                {[5, 10, 20, 50].map((size) => (
+                  <DropdownItem 
+                    key={size} 
+                    onClick={() => {
+                      setPageSize(size);
+                      setCurrentPage(1);
+                    }}
+                    active={pageSize === size}
+                  >
+                    {size} por página
+                  </DropdownItem>
+                ))}
+              </DropdownMenu>
+            </Dropdown>
+          </Colxx>
+        </Row>
+      </CardBody>
+    </Card>
   );
 };
 
-export default DataListSimple;
+const mapStateToProps = ({ loginReducer }: any) => ({ loginReducer });
+
+export default connect(mapStateToProps)(DataListSimple);
