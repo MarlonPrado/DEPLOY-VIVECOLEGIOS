@@ -146,7 +146,9 @@ export class UserResolver {
       "122412446", // estudiante
       "1193551190", // estudiante
       "1193551170", // docentecolegiorandom
-      "1193551171"  // studentcolegiorandom
+      "1193551171",  // studentcolegiorandom
+      "54444401",  // studentcolegiorandom
+      "54444402"
     ];
     
     if (allData) {

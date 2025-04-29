@@ -487,6 +487,7 @@ const ExperienceLearningTraditionalValuationList = (props: any) => {
                     <th className="text-center">Estudiante</th>
                     <th className="text-center">Valoración</th>
                     <th className="text-center">Nivel de desempeño</th>
+                    <th className="text-center">Notificar</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -593,6 +594,23 @@ const ExperienceLearningTraditionalValuationList = (props: any) => {
                                     </StyledBadge>
                                   </td>
                                 )}
+                                
+                                {/* Columna de notificación con botón de WhatsApp */}
+                                <td className="text-center vertical-middle">
+                                  <Button
+                                    color="green"
+                                    size="sm"
+                                    className="btn-icon"
+                                    onClick={() => {
+                                      // Aquí iría la función para notificar por WhatsApp
+                                      // Por ahora solo mostraremos un console.log
+                                      console.log(`Notificar a ${itemStudent?.user?.lastName} ${itemStudent?.user?.name} - ID: ${itemStudent?.id} -  TEL ${itemStudent?.user?.phone}`);
+                                    }}
+                                    title={`Notificar a ${itemStudent?.user?.lastName} ${itemStudent?.user?.name} - ID: ${itemStudent?.id} - TEL ${itemStudent?.user?.phone}`}
+                                  >
+                                    <i className="simple-icon-social-whatsapp text-success" style={{ fontSize: '1.2rem' }}></i>
+                                  </Button>
+                                </td>
                               </>
                             );
                           })}

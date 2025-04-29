@@ -8,11 +8,9 @@ query getAllInbox($userId: String!) {
       node {
         id
         active         
-        user {
-          id
+        createdByUser {
           name
-          lastName
-        }         
+        }       
         title
         message
         dateSend

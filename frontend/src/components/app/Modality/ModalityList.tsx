@@ -21,6 +21,7 @@ const ModalityList = (props: any) => {
 
   const getDataTable = useCallback(async () => {
     let permissions = permissionsMenu(props?.loginReducer, location.pathname);
+ 
     props.getListAllModality(props?.loginReducer?.schoolId, props?.loginReducer?.schoolYear, permissions.fullAccess).then((listData: any) => {
       setDataTable(listData);
     });
