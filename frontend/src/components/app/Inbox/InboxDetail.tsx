@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { connect } from 'react-redux';
-import { Row, Button, Card, Modal, ModalHeader, ModalBody, ModalFooter } from 'reactstrap';
+import { Row, Button, Card, CardBody, Modal, ModalHeader, ModalBody, ModalFooter, Table } from 'reactstrap';
 import moment from 'moment';
 import 'moment/locale/es';
 
@@ -9,7 +9,6 @@ import * as inboxActions from '../../../stores/actions/InboxAction';
 import { Colxx } from '../../common/CustomBootstrap';
 import { Loader } from '../../common/Loader';
 import InboxCreate from './InboxCreate';
-import DataListSimple from '../../common/Data/DataListSimple';
 
 const InboxDetail = (props: any) => {
   // Estados
@@ -17,8 +16,13 @@ const InboxDetail = (props: any) => {
   const [loading, setLoading] = useState(true);
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [viewModalOpen, setViewModalOpen] = useState(false);
+  const [deleteConfirmModalOpen, setDeleteConfirmModalOpen] = useState(false);
   const [selectedMessage, setSelectedMessage] = useState<any>(null);
+  const [selectedItems, setSelectedItems] = useState<any[]>([]);
   const [filterStatus, setFilterStatus] = useState('all');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   // Usuario y permisos
   const userRoles = props.loginReducer?.role || {};
@@ -75,6 +79,14 @@ const InboxDetail = (props: any) => {
           mappedMessages = mappedMessages.filter(msg => !msg.dateRead);
         }
         
+        // Aplicar búsqueda si existe
+        if (searchTerm) {
+          mappedMessages = mappedMessages.filter(msg => {
+            const searchContent = `${msg.title} ${msg.message} ${msg.createdByUser?.name || ''} ${msg.createdByUser?.lastName || ''}`.toLowerCase();
+            return searchContent.includes(searchTerm.toLowerCase());
+          });
+        }
+        
         setMessages(mappedMessages);
       } else {
         setMessages([]);
@@ -86,44 +98,12 @@ const InboxDetail = (props: any) => {
     } finally {
       setLoading(false);
     }
-  }, [props, filterStatus]);
+  }, [props, filterStatus, searchTerm]);
 
   // Efecto inicial
   useEffect(() => {
     loadMessages();
   }, [loadMessages]);
-
-  // Definir columnas
-  const columns = [
-    { 
-      column: 'title', 
-      label: 'Título', 
-      width: '25%',
-      render: (row: any) => truncateText(row.title, 40)
-    },
-    { 
-      column: 'message', 
-      label: 'Mensaje', 
-      width: '30%',
-      render: (row: any) => truncateText(row.message, 50)
-    },
-    { 
-      column: 'createdByUser', 
-      label: 'Autor', 
-      width: '20%',
-      render: (row: any) => {
-        const user = row.createdByUser;
-        if (!user) return 'Sistema';
-        return `${user.name || ''} ${user.lastName || ''}`.trim() || 'Desconocido';
-      }
-    },
-    { 
-      column: 'dateSend', 
-      label: 'Fecha de envío', 
-      width: '15%',
-      render: (row: any) => formatDateShort(row.dateSend)
-    }
-  ];
 
   // Marcar como leído
   const markAsRead = async (message: any) => {
@@ -150,11 +130,53 @@ const InboxDetail = (props: any) => {
   const deleteMessage = async (id: string) => {
     try {
       await props.deleteInbox(id, true);
-      createNotification('success', 'Mensaje eliminado', 'Mensaje eliminado correctamente');
+      createNotification('success', 'Eliminado', 'Mensaje eliminado correctamente');
       setViewModalOpen(false);
+      setDeleteConfirmModalOpen(false);
       loadMessages();
     } catch (error) {
       createNotification('error', 'Error', 'No se pudo eliminar el mensaje');
+    }
+  };
+
+  // Eliminar múltiples mensajes
+  const deleteSelectedMessages = async () => {
+    try {
+      const promises = selectedItems.map(item => props.deleteInbox(item.id, false));
+      await Promise.all(promises);
+      createNotification('success', 'Eliminados', `${selectedItems.length} mensajes eliminados correctamente`);
+      setSelectedItems([]);
+      setDeleteConfirmModalOpen(false);
+      loadMessages();
+    } catch (error) {
+      createNotification('error', 'Error', 'No se pudieron eliminar algunos mensajes');
+    }
+  };
+
+  // Confirmar eliminación
+  const confirmDelete = (message: any = null) => {
+    if (message) {
+      setSelectedMessage(message);
+      setSelectedItems([message]);
+    }
+    setDeleteConfirmModalOpen(true);
+  };
+
+  // Toggle selección de mensaje
+  const toggleSelectMessage = (message: any) => {
+    if (selectedItems.find(item => item.id === message.id)) {
+      setSelectedItems(selectedItems.filter(item => item.id !== message.id));
+    } else {
+      setSelectedItems([...selectedItems, message]);
+    }
+  };
+
+  // Seleccionar/deseleccionar todos
+  const toggleSelectAll = () => {
+    if (selectedItems.length === paginatedMessages.length) {
+      setSelectedItems([]);
+    } else {
+      setSelectedItems([...paginatedMessages]);
     }
   };
 
@@ -172,68 +194,315 @@ const InboxDetail = (props: any) => {
     }
   };
 
-  // Configurar acciones para DataList
-  const actions = [
-    {
-      id: 'view',
-      label: 'Ver',
-      color: 'primary',
-      icon: 'simple-icon-eye',
-      action: (row: any) => viewMessage(row)
-    },
-    {
-      id: 'markAsRead',
-      label: 'Leer',
-      color: 'success',
-      icon: 'simple-icon-check',
-      action: (row: any) => markAsRead(row),
-      condition: (row: any) => !row.dateRead
-    },
-    {
-      id: 'delete',
-      label: 'Eliminar',
-      color: 'danger',
-      icon: 'simple-icon-trash',
-      action: (row: any) => deleteMessage(row.id)
-    }
-  ];
+  // Filtrar por estado
+  const changeFilter = (filter: string) => {
+    setFilterStatus(filter);
+    setCurrentPage(1);
+  };
+
+  // Calcular paginación
+  const startIndex = (currentPage - 1) * pageSize;
+  const endIndex = Math.min(startIndex + pageSize, messages.length);
+  const paginatedMessages = messages.slice(startIndex, endIndex);
+  const totalPages = Math.ceil(messages.length / pageSize);
 
   return (
     <>
-      <Row className="mb-4">
-        <Colxx xxs="12">
-          <h1 className="mb-3">
-            <i className="iconsminds-mail mr-2"></i>
-            Bandeja de Entrada
-          </h1>
-        </Colxx>
-      </Row>
+      {/* Encabezado */}
+      <div className="d-flex justify-content-between align-items-center mb-3">
+        <div className="d-flex align-items-center">
+          <i className="iconsminds-mail mr-2" style={{ fontSize: '1.5rem' }}></i>
+          <h1 className="mb-0">Bandeja de Entrada</h1>
+        </div>
+        <div className="d-flex">
+          <input
+            type="text"
+            className="form-control mr-2"
+            placeholder="Buscar..."
+            value={searchTerm}
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+              setCurrentPage(1);
+            }}
+            style={{ maxWidth: '200px' }}
+          />
+          <div className="btn-group mr-2">
+            <Button 
+              color={filterStatus === 'all' ? 'primary' : 'outline-primary'} 
+              onClick={() => changeFilter('all')}
+              size="sm"
+            >
+              Todos
+            </Button>
+            <Button 
+              color={filterStatus === 'read' ? 'primary' : 'outline-primary'} 
+              onClick={() => changeFilter('read')}
+              size="sm"
+            >
+              Leídos
+            </Button>
+            <Button 
+              color={filterStatus === 'unread' ? 'primary' : 'outline-primary'} 
+              onClick={() => changeFilter('unread')}
+              size="sm"
+            >
+              No leídos
+            </Button>
+          </div>
+          {selectedItems.length > 0 && (
+            <Button 
+              color="danger" 
+              className="mr-2"
+              size="sm"
+              onClick={() => confirmDelete()}
+            >
+              <i className="simple-icon-trash mr-1"></i>
+              Eliminar ({selectedItems.length})
+            </Button>
+          )}
+          <Button 
+            color="primary" 
+            className="mr-2"
+            size="sm"
+            onClick={loadMessages}
+          >
+            <i className="simple-icon-refresh mr-1"></i>
+            Actualizar
+          </Button>
+          {canCreateMessage && (
+            <Button
+              color="primary"
+              size="sm"
+              onClick={() => setCreateModalOpen(true)}
+            >
+              <i className="simple-icon-plus mr-1"></i>
+              Agregar Nuevo
+            </Button>
+          )}
+        </div>
+      </div>
 
+      <div className="separator mb-4"></div>
+
+      {/* Contenido principal */}
       {loading ? (
-        <Row>
-          <Colxx xxs="12" className="d-flex justify-content-center">
-            <Loader />
-          </Colxx>
-        </Row>
+        <div className="text-center p-5">
+          <Loader />
+        </div>
       ) : (
-        <DataListSimple
-          data={messages}
-          columns={columns}
-          actions={actions}
-          refreshDataTable={loadMessages}
-          toggleModal={() => {
-            setCreateModalOpen(true);
-          }}
-          filterOptions={[
-            { label: 'Todos', value: 'all' },
-            { label: 'Leídos', value: 'read' },
-            { label: 'No leídos', value: 'unread' },
-          ]}
-          filterValue={filterStatus}
-          onFilterChange={setFilterStatus}
-          deleteData={deleteMessage}
-          trClass={(row: any) => !row.dateRead ? 'font-weight-bold' : ''}
-        />
+        <Card className="mb-4">
+          <CardBody className="p-0">
+            {messages.length > 0 ? (
+              <>
+                <Table hover responsive className="m-0">
+                  <thead>
+                    <tr>
+                      <th style={{ width: '40px' }} className="text-center">
+                        <div className="custom-control custom-checkbox">
+                          <input
+                            type="checkbox"
+                            className="custom-control-input"
+                            id="checkAll"
+                            checked={paginatedMessages.length > 0 && selectedItems.length === paginatedMessages.length}
+                            onChange={toggleSelectAll}
+                          />
+                          <label className="custom-control-label" htmlFor="checkAll"></label>
+                        </div>
+                      </th>
+                      <th style={{ width: '25%' }}>Título</th>
+                      <th style={{ width: '30%' }}>Mensaje</th>
+                      <th style={{ width: '20%' }}>Autor</th>
+                      <th style={{ width: '15%' }}>Fecha de envío</th>
+                      <th style={{ width: '140px', textAlign: 'center' }}>Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {paginatedMessages.map((message) => (
+                      <tr 
+                        key={message.id} 
+                        className={!message.dateRead ? 'font-weight-bold' : ''}
+                        style={!message.dateRead ? {borderLeft: '4px solid #00b8d8'} : {}}
+                      >
+                        <td className="text-center align-middle">
+                          <div className="custom-control custom-checkbox">
+                            <input
+                              type="checkbox"
+                              className="custom-control-input"
+                              id={`check_${message.id}`}
+                              checked={!!selectedItems.find(item => item.id === message.id)}
+                              onChange={() => toggleSelectMessage(message)}
+                            />
+                            <label className="custom-control-label" htmlFor={`check_${message.id}`}></label>
+                          </div>
+                        </td>
+                        <td className="align-middle" onClick={() => viewMessage(message)} style={{cursor: 'pointer'}}>
+                          {truncateText(message.title, 40)}
+                          {!message.dateRead && (
+                            <span className="badge badge-primary ml-2">Nuevo</span>
+                          )}
+                        </td>
+                        <td className="align-middle" onClick={() => viewMessage(message)} style={{cursor: 'pointer'}}>
+                          {truncateText(message.message, 50)}
+                        </td>
+                        <td className="align-middle" onClick={() => viewMessage(message)} style={{cursor: 'pointer'}}>
+                          {message.createdByUser?.name ? 
+                            `${message.createdByUser.name || ''} ${message.createdByUser.lastName || ''}`.trim() 
+                            : 'Sistema'
+                          }
+                        </td>
+                        <td className="align-middle" onClick={() => viewMessage(message)} style={{cursor: 'pointer'}}>
+                          {formatDateShort(message.dateSend)}
+                        </td>
+                        <td className="text-center">
+                          <div className="d-flex justify-content-center">
+                            <Button 
+                              color="info" 
+                              size="sm" 
+                              className="mr-1"
+                              onClick={() => viewMessage(message)}
+                              title="Ver detalles"
+                            >
+                              <i className="simple-icon-eye"></i>
+                            </Button>
+                            {!message.dateRead && (
+                              <Button 
+                                color="success" 
+                                size="sm" 
+                                className="mr-1"
+                                onClick={() => markAsRead(message)}
+                                title="Marcar como leído"
+                              >
+                                <i className="simple-icon-check"></i>
+                              </Button>
+                            )}
+                            <Button 
+                              color="danger" 
+                              size="sm"
+                              onClick={() => confirmDelete(message)}
+                              title="Eliminar"
+                            >
+                              <i className="simple-icon-trash"></i>
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </Table>
+
+                {/* Paginación */}
+                <div className="d-flex justify-content-between align-items-center p-3">
+                  <div>
+                    Mostrando {startIndex + 1}-{endIndex} de {messages.length}
+                  </div>
+                  <div className="d-flex">
+                    <div className="mr-3">
+                      <select 
+                        className="form-control form-control-sm" 
+                        value={pageSize}
+                        onChange={(e) => {
+                          setPageSize(parseInt(e.target.value));
+                          setCurrentPage(1);
+                        }}
+                      >
+                        <option value="5">5 por página</option>
+                        <option value="10">10 por página</option>
+                        <option value="20">20 por página</option>
+                        <option value="50">50 por página</option>
+                      </select>
+                    </div>
+                    <div>
+                      <nav>
+                        <ul className="pagination pagination-sm mb-0">
+                          <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
+                            <button 
+                              className="page-link" 
+                              onClick={() => setCurrentPage(1)}
+                              disabled={currentPage === 1}
+                            >
+                              «
+                            </button>
+                          </li>
+                          <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
+                            <button 
+                              className="page-link" 
+                              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                              disabled={currentPage === 1}
+                            >
+                              ‹
+                            </button>
+                          </li>
+                          {Array.from({length: Math.min(5, totalPages)}, (_, i) => {
+                            let pageNum = currentPage;
+                            if (currentPage <= 3) {
+                              pageNum = i + 1;
+                            } else if (currentPage >= totalPages - 2) {
+                              pageNum = totalPages - 4 + i;
+                            } else {
+                              pageNum = currentPage - 2 + i;
+                            }
+                            
+                            if (pageNum <= totalPages && pageNum > 0) {
+                              return (
+                                <li 
+                                  className={`page-item ${currentPage === pageNum ? 'active' : ''}`}
+                                  key={pageNum}
+                                >
+                                  <button 
+                                    className="page-link" 
+                                    onClick={() => setCurrentPage(pageNum)}
+                                  >
+                                    {pageNum}
+                                  </button>
+                                </li>
+                              );
+                            }
+                            return null;
+                          })}
+                          <li className={`page-item ${currentPage === totalPages ? 'disabled' : ''}`}>
+                            <button 
+                              className="page-link" 
+                              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                              disabled={currentPage === totalPages}
+                            >
+                              ›
+                            </button>
+                          </li>
+                          <li className={`page-item ${currentPage === totalPages ? 'disabled' : ''}`}>
+                            <button 
+                              className="page-link" 
+                              onClick={() => setCurrentPage(totalPages)}
+                              disabled={currentPage === totalPages}
+                            >
+                              »
+                            </button>
+                          </li>
+                        </ul>
+                      </nav>
+                    </div>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div className="text-center p-5">
+                <div className="mb-3">
+                  <i className="iconsminds-mail-read" style={{ fontSize: '5rem', opacity: '0.3' }}></i>
+                </div>
+                <h2 className="font-weight-bold">No hay mensajes</h2>
+                <p className="text-muted mb-4">Tu bandeja de entrada está vacía. Los nuevos mensajes aparecerán aquí.</p>
+                {canCreateMessage && (
+                  <Button 
+                    color="primary" 
+                    onClick={() => setCreateModalOpen(true)}
+                  >
+                    <i className="simple-icon-plus mr-2"></i>
+                    Enviar un mensaje
+                  </Button>
+                )}
+              </div>
+            )}
+          </CardBody>
+        </Card>
       )}
 
       {/* Modal para ver mensaje en detalle */}
@@ -266,14 +535,14 @@ const InboxDetail = (props: any) => {
                 </div>
               </div>
               <div className="separator my-4"></div>
-              <Card className="bg-light p-4">
+              <div className="bg-light p-4 rounded">
                 <div style={{ whiteSpace: 'pre-wrap' }}>
                   {selectedMessage.message}
                 </div>
-              </Card>
+              </div>
             </ModalBody>
             <ModalFooter>
-              <Button color="danger" onClick={() => deleteMessage(selectedMessage.id)}>
+              <Button color="danger" onClick={() => confirmDelete(selectedMessage)}>
                 <i className="simple-icon-trash mr-2"></i>
                 Eliminar
               </Button>
@@ -283,6 +552,33 @@ const InboxDetail = (props: any) => {
             </ModalFooter>
           </>
         )}
+      </Modal>
+
+      {/* Modal para confirmar eliminación */}
+      <Modal
+        isOpen={deleteConfirmModalOpen}
+        toggle={() => setDeleteConfirmModalOpen(!deleteConfirmModalOpen)}
+      >
+        <ModalHeader toggle={() => setDeleteConfirmModalOpen(false)} className="bg-danger text-white">
+          Confirmar eliminación
+        </ModalHeader>
+        <ModalBody>
+          {selectedItems.length === 1 ? (
+            <p>¿Está seguro que desea eliminar el mensaje <strong>"{selectedItems[0]?.title || 'Sin título'}"</strong>?</p>
+          ) : (
+            <p>¿Está seguro que desea eliminar <strong>{selectedItems.length} mensajes</strong>?</p>
+          )}
+          <p className="text-danger"><strong>Esta acción es irreversible.</strong></p>
+        </ModalBody>
+        <ModalFooter>
+          <Button color="danger" onClick={deleteSelectedMessages}>
+            <i className="simple-icon-trash mr-2"></i>
+            Confirmar eliminación
+          </Button>
+          <Button color="light" onClick={() => setDeleteConfirmModalOpen(false)}>
+            Cancelar
+          </Button>
+        </ModalFooter>
       </Modal>
 
       {/* Modal de creación de mensaje */}
