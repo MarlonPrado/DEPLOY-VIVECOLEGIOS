@@ -105,15 +105,26 @@ const InboxDetail = (props: any) => {
     loadMessages();
   }, [loadMessages]);
 
-  // Marcar como leído
+  // Marcar como leído (con notificación explícita)
   const markAsRead = async (message: any) => {
     if (message.dateRead) return;
     try {
       await props.updateInbox({ dateRead: new Date().toISOString() }, message.id, false);
-      createNotification('success', 'Mensaje leído', 'El mensaje ha sido marcado como leído');
+      createNotification('success', 'success', '');
       loadMessages();
     } catch (error) {
       createNotification('error', 'Error', 'No se pudo marcar como leído el mensaje');
+    }
+  };
+
+  // Marcar como leído silenciosamente (sin notificación)
+  const markAsReadSilently = async (message: any) => {
+    if (message.dateRead) return;
+    try {
+      await props.updateInbox({ dateRead: new Date().toISOString() }, message.id, false);
+      loadMessages();
+    } catch (error) {
+      console.error("Error al marcar mensaje como leído:", error);
     }
   };
 
@@ -122,7 +133,7 @@ const InboxDetail = (props: any) => {
     setSelectedMessage(message);
     setViewModalOpen(true);
     if (!message.dateRead) {
-      markAsRead(message);
+      markAsReadSilently(message);  // Marca como leído sin notificación
     }
   };
 
@@ -130,7 +141,7 @@ const InboxDetail = (props: any) => {
   const deleteMessage = async (id: string) => {
     try {
       await props.deleteInbox(id, true);
-      createNotification('success', 'Eliminado', 'Mensaje eliminado correctamente');
+      createNotification('success', 'success', '');
       setViewModalOpen(false);
       setDeleteConfirmModalOpen(false);
       loadMessages();
@@ -144,7 +155,7 @@ const InboxDetail = (props: any) => {
     try {
       const promises = selectedItems.map(item => props.deleteInbox(item.id, false));
       await Promise.all(promises);
-      createNotification('success', 'Eliminados', `${selectedItems.length} mensajes eliminados correctamente`);
+      createNotification('success', 'success', '');
       setSelectedItems([]);
       setDeleteConfirmModalOpen(false);
       loadMessages();
@@ -186,7 +197,7 @@ const InboxDetail = (props: any) => {
       const id = await props.saveNewInbox(dataForm);
       if (id) {
         setCreateModalOpen(false);
-        createNotification('success', 'Mensaje enviado', 'El mensaje ha sido enviado correctamente');
+        createNotification('success', 'success', '');
         loadMessages();
       }
     } catch (error) {
@@ -205,6 +216,34 @@ const InboxDetail = (props: any) => {
   const endIndex = Math.min(startIndex + pageSize, messages.length);
   const paginatedMessages = messages.slice(startIndex, endIndex);
   const totalPages = Math.ceil(messages.length / pageSize);
+
+  // Mensajes de estado según filtro
+  const getEmptyStateMessage = () => {
+    switch (filterStatus) {
+      case 'read':
+        return {
+          icon: 'iconsminds-mail-open',
+          title: 'No tienes mensajes leídos',
+          description: 'Los mensajes que hayas leído aparecerán aquí'
+        };
+      case 'unread':
+        return {
+          icon: 'iconsminds-mail',
+          title: 'No tienes mensajes pendientes',
+          description: '¡Felicidades! Has leído todos tus mensajes'
+        };
+      default:
+        return {
+          icon: 'iconsminds-empty-mailbox',
+          title: 'No hay mensajes',
+          description: 'Tu bandeja de entrada está vacía. Los nuevos mensajes aparecerán aquí.'
+        };
+    }
+  };
+
+  // Obtener contadores para los botones de filtro
+  const unreadCount = messages.filter(msg => !msg.dateRead).length;
+  const readCount = messages.filter(msg => msg.dateRead).length;
 
   return (
     <>
@@ -231,22 +270,25 @@ const InboxDetail = (props: any) => {
               color={filterStatus === 'all' ? 'primary' : 'outline-primary'} 
               onClick={() => changeFilter('all')}
               size="sm"
+              className="px-3"
             >
-              Todos
+              Todos <span className="badge badge-light ml-1">{messages.length}</span>
             </Button>
             <Button 
               color={filterStatus === 'read' ? 'primary' : 'outline-primary'} 
               onClick={() => changeFilter('read')}
               size="sm"
+              className="px-3"
             >
-              Leídos
+              Leídos <span className="badge badge-light ml-1">{readCount}</span>
             </Button>
             <Button 
               color={filterStatus === 'unread' ? 'primary' : 'outline-primary'} 
               onClick={() => changeFilter('unread')}
               size="sm"
+              className="px-3"
             >
-              No leídos
+              No leídos <span className="badge badge-light ml-1">{unreadCount}</span>
             </Button>
           </div>
           {selectedItems.length > 0 && (
@@ -261,7 +303,7 @@ const InboxDetail = (props: any) => {
             </Button>
           )}
           <Button 
-            color="primary" 
+            color="info" 
             className="mr-2"
             size="sm"
             onClick={loadMessages}
@@ -313,7 +355,7 @@ const InboxDetail = (props: any) => {
                       <th style={{ width: '30%' }}>Mensaje</th>
                       <th style={{ width: '20%' }}>Autor</th>
                       <th style={{ width: '15%' }}>Fecha de envío</th>
-                      <th style={{ width: '140px', textAlign: 'center' }}>Acciones</th>
+                      <th style={{ width: '180px', textAlign: 'center' }}>Acciones</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -321,7 +363,7 @@ const InboxDetail = (props: any) => {
                       <tr 
                         key={message.id} 
                         className={!message.dateRead ? 'font-weight-bold' : ''}
-                        style={!message.dateRead ? {borderLeft: '4px solid #00b8d8'} : {}}
+                        style={!message.dateRead ? {borderLeft: '4px solid #17a2b8'} : {}}
                       >
                         <td className="text-center align-middle">
                           <div className="custom-control custom-checkbox">
@@ -336,13 +378,17 @@ const InboxDetail = (props: any) => {
                           </div>
                         </td>
                         <td className="align-middle" onClick={() => viewMessage(message)} style={{cursor: 'pointer'}}>
-                          {truncateText(message.title, 40)}
-                          {!message.dateRead && (
-                            <span className="badge badge-primary ml-2">Nuevo</span>
-                          )}
+                          <div className="d-flex align-items-center">
+                            <i className={message.dateRead ? 'iconsminds-mail-open mr-2' : 'iconsminds-mail mr-2'} 
+                              style={{ fontSize: '1.2rem', color: message.dateRead ? '#6c757d' : '#17a2b8' }}></i>
+                            {truncateText(message.title, 35)}
+                            {!message.dateRead && (
+                              <span className="badge badge-info ml-2">Nuevo</span>
+                            )}
+                          </div>
                         </td>
                         <td className="align-middle" onClick={() => viewMessage(message)} style={{cursor: 'pointer'}}>
-                          {truncateText(message.message, 50)}
+                          {truncateText(message.message, 40)}
                         </td>
                         <td className="align-middle" onClick={() => viewMessage(message)} style={{cursor: 'pointer'}}>
                           {message.createdByUser?.name ? 
@@ -353,35 +399,36 @@ const InboxDetail = (props: any) => {
                         <td className="align-middle" onClick={() => viewMessage(message)} style={{cursor: 'pointer'}}>
                           {formatDateShort(message.dateSend)}
                         </td>
-                        <td className="text-center">
-                          <div className="d-flex justify-content-center">
+                        <td className="text-right">
+                          <div className="d-flex justify-content-end">
                             <Button 
                               color="info" 
                               size="sm" 
-                              className="mr-1"
+                              className="mr-1 px-2"
                               onClick={() => viewMessage(message)}
-                              title="Ver detalles"
+                              title="Ver mensaje"
                             >
-                              <i className="simple-icon-eye"></i>
+                              <i className="simple-icon-eye mr-1"></i> Ver
                             </Button>
                             {!message.dateRead && (
                               <Button 
                                 color="success" 
                                 size="sm" 
-                                className="mr-1"
+                                className="mr-1 px-2"
                                 onClick={() => markAsRead(message)}
                                 title="Marcar como leído"
                               >
-                                <i className="simple-icon-check"></i>
+                                <i className="simple-icon-check mr-1"></i> Leído
                               </Button>
                             )}
                             <Button 
                               color="danger" 
                               size="sm"
+                              className="px-2"
                               onClick={() => confirmDelete(message)}
-                              title="Eliminar"
+                              title="Eliminar mensaje"
                             >
-                              <i className="simple-icon-trash"></i>
+                              <i className="simple-icon-trash mr-1"></i> Eliminar
                             </Button>
                           </div>
                         </td>
@@ -485,11 +532,12 @@ const InboxDetail = (props: any) => {
               </>
             ) : (
               <div className="text-center p-5">
-                <div className="mb-3">
-                  <i className="iconsminds-mail-read" style={{ fontSize: '5rem', opacity: '0.3' }}></i>
+                {/* Mensaje personalizado según el filtro seleccionado */}
+                <div className="mb-4">
+                  <i className={getEmptyStateMessage().icon} style={{ fontSize: '5rem', opacity: '0.3' }}></i>
                 </div>
-                <h2 className="font-weight-bold">No hay mensajes</h2>
-                <p className="text-muted mb-4">Tu bandeja de entrada está vacía. Los nuevos mensajes aparecerán aquí.</p>
+                <h2 className="font-weight-bold">{getEmptyStateMessage().title}</h2>
+                <p className="text-muted mb-4">{getEmptyStateMessage().description}</p>
                 {canCreateMessage && (
                   <Button 
                     color="primary" 
@@ -513,8 +561,12 @@ const InboxDetail = (props: any) => {
       >
         {selectedMessage && (
           <>
-            <ModalHeader toggle={() => setViewModalOpen(false)}>
-              {selectedMessage.title}
+            <ModalHeader toggle={() => setViewModalOpen(false)} className="bg-light">
+              <div className="d-flex align-items-center">
+                <i className={selectedMessage.dateRead ? 'iconsminds-mail-open mr-2' : 'iconsminds-mail mr-2'}
+                   style={{ fontSize: '1.5rem', color: selectedMessage.dateRead ? '#6c757d' : '#17a2b8' }}></i>
+                {selectedMessage.title}
+              </div>
             </ModalHeader>
             <ModalBody>
               <div className="d-flex justify-content-between mb-3">
@@ -528,9 +580,15 @@ const InboxDetail = (props: any) => {
                 </div>
                 <div>
                   {selectedMessage.dateRead ? (
-                    <p className="mb-1"><strong>Leído:</strong> {formatDate(selectedMessage.dateRead)}</p>
+                    <p className="mb-1 text-success">
+                      <i className="simple-icon-check mr-1"></i>
+                      <strong>Leído:</strong> {formatDate(selectedMessage.dateRead)}
+                    </p>
                   ) : (
-                    <p className="mb-1 text-warning"><strong>Estado:</strong> No leído</p>
+                    <p className="mb-1 text-info">
+                      <i className="simple-icon-bell mr-1"></i>
+                      <strong>Estado:</strong> No leído
+                    </p>
                   )}
                 </div>
               </div>
@@ -542,9 +600,15 @@ const InboxDetail = (props: any) => {
               </div>
             </ModalBody>
             <ModalFooter>
+              {!selectedMessage.dateRead && (
+                <Button color="success" onClick={() => markAsRead(selectedMessage)}>
+                  <i className="simple-icon-check mr-2"></i>
+                  Marcar como leído
+                </Button>
+              )}
               <Button color="danger" onClick={() => confirmDelete(selectedMessage)}>
                 <i className="simple-icon-trash mr-2"></i>
-                Eliminar
+                Eliminar mensaje
               </Button>
               <Button color="secondary" onClick={() => setViewModalOpen(false)}>
                 Cerrar
@@ -560,6 +624,7 @@ const InboxDetail = (props: any) => {
         toggle={() => setDeleteConfirmModalOpen(!deleteConfirmModalOpen)}
       >
         <ModalHeader toggle={() => setDeleteConfirmModalOpen(false)} className="bg-danger text-white">
+          <i className="simple-icon-trash mr-2"></i>
           Confirmar eliminación
         </ModalHeader>
         <ModalBody>
