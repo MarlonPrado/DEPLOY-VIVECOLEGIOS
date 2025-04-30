@@ -1,7 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { connect } from 'react-redux';
-import { Button, Card, CardBody, Input, InputGroup, Row, Table, Pagination, PaginationItem, PaginationLink, Badge, Dropdown, DropdownToggle, DropdownMenu, DropdownItem } from 'reactstrap';
+import { 
+  Button, Card, CardBody, Input, InputGroup, Row, Col, Table, 
+  Pagination, PaginationItem, PaginationLink, Badge, 
+  Dropdown, DropdownToggle, DropdownMenu, DropdownItem 
+} from 'reactstrap';
 import { Colxx } from '../CustomBootstrap';
+import { Loader } from '../Loader';
 
 const DataListSimple = (props: any) => {
   const [currentPage, setCurrentPage] = useState(1);
@@ -9,12 +14,14 @@ const DataListSimple = (props: any) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [data, setData] = useState<any[]>([]);
   const [selectedItems, setSelectedItems] = useState<any[]>([]);
-  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [sortField, setSortField] = useState('');
+  const [sortDirection, setSortDirection] = useState('asc');
   const [filterDropdownOpen, setFilterDropdownOpen] = useState(false);
-  
+  const [loading, setLoading] = useState(false);
+
   // Permisos de usuario
   const userRole = props.loginReducer?.role?.name || '';
-  const canCreate = !['ESTUDIANTE', 'ACUDIENTE'].includes(userRole);
+  const canCreate = props.canCreate !== undefined ? props.canCreate : !['ESTUDIANTE', 'ACUDIENTE'].includes(userRole);
   
   useEffect(() => {
     setData(props.data || []);
@@ -23,15 +30,58 @@ const DataListSimple = (props: any) => {
   // Filtrado
   useEffect(() => {
     if (searchTerm) {
-      const filtered = props.data?.filter((item: any) => {
-        const values = Object.values(item).join(' ').toLowerCase();
-        return values.includes(searchTerm.toLowerCase());
-      });
-      setData(filtered || []);
+      // Si hay campos específicos de búsqueda definidos, úsalos
+      if (props.searchFields && props.searchFields.length > 0) {
+        const filtered = props.data?.filter((item: any) => {
+          return props.searchFields.some((field: string) => {
+            const value = item[field];
+            return value && String(value).toLowerCase().includes(searchTerm.toLowerCase());
+          });
+        });
+        setData(filtered || []);
+      } else {
+        // Búsqueda en todos los campos
+        const filtered = props.data?.filter((item: any) => {
+          const values = Object.values(item).join(' ').toLowerCase();
+          return values.includes(searchTerm.toLowerCase());
+        });
+        setData(filtered || []);
+      }
     } else {
       setData(props.data || []);
     }
-  }, [searchTerm, props.data]);
+    setCurrentPage(1); // Resetear a primera página al buscar
+  }, [searchTerm, props.data, props.searchFields]);
+  
+  // Ordenamiento
+  const handleSort = (field: string) => {
+    let direction = 'asc';
+    
+    if (sortField === field && sortDirection === 'asc') {
+      direction = 'desc';
+    }
+    
+    setSortField(field);
+    setSortDirection(direction);
+    
+    // Ordenar los datos
+    const sortedData = [...data].sort((a, b) => {
+      const valueA = a[field] || '';
+      const valueB = b[field] || '';
+      
+      if (typeof valueA === 'string' && typeof valueB === 'string') {
+        return direction === 'asc' 
+          ? valueA.localeCompare(valueB) 
+          : valueB.localeCompare(valueA);
+      }
+      
+      return direction === 'asc' 
+        ? (valueA > valueB ? 1 : -1) 
+        : (valueA < valueB ? 1 : -1);
+    });
+    
+    setData(sortedData);
+  };
   
   // Paginación
   const totalPages = Math.ceil((data?.length || 0) / pageSize);
@@ -67,35 +117,58 @@ const DataListSimple = (props: any) => {
   
   // Eliminación masiva
   const handleDeleteSelected = () => {
-    if (window.confirm(`¿Está seguro que desea eliminar ${selectedItems.length} elementos?`)) {
-      selectedItems.forEach(item => {
-        props.deleteData && props.deleteData(item.id);
-      });
-      setSelectedItems([]);
+    if (props.confirmMessage) {
+      if (window.confirm(props.confirmMessage)) {
+        handleDelete();
+      }
+    } else {
+      if (window.confirm(`¿Está seguro que desea eliminar ${selectedItems.length} elementos?`)) {
+        handleDelete();
+      }
     }
   };
   
+  const handleDelete = () => {
+    selectedItems.forEach(item => {
+      props.deleteData && props.deleteData(item.id);
+    });
+    setSelectedItems([]);
+  };
+  
+  // Refrescar datos
+  const handleRefresh = () => {
+    setLoading(true);
+    props.refreshData && props.refreshData().finally(() => {
+      setLoading(false);
+    });
+  };
+
   return (
-    <Card className="mb-4">
+    <Card className="mb-4 shadow-sm">
       <CardBody>
-        <Row className="mb-3 align-items-center">
-          <Colxx xxs="6" sm="4" md="3" lg="2">
-            <h6 className="mb-1 text-muted">
-              Mostrando {startIndex + 1}-{endIndex} de {data.length}
-            </h6>
-          </Colxx>
-          
-          <Colxx xxs="6" sm="4" md="5" lg="5">
-            <InputGroup>
+        <div className="d-flex flex-wrap align-items-center mb-3">
+          {/* Búsqueda */}
+          <div className="search-container mr-auto mb-2 mb-md-0" style={{ maxWidth: '350px', width: '100%' }}>
+            <InputGroup size="sm">
               <Input 
-                placeholder="Buscar..." 
+                placeholder={props.searchPlaceholder || "Buscar..."}
                 value={searchTerm}
                 onChange={e => setSearchTerm(e.target.value)}
               />
+              <div className="input-group-append">
+                <Button 
+                  color="secondary" 
+                  outline
+                  onClick={() => searchTerm ? setSearchTerm('') : null}
+                >
+                  <i className={searchTerm ? "simple-icon-close" : "simple-icon-magnifier"} />
+                </Button>
+              </div>
             </InputGroup>
-          </Colxx>
+          </div>
 
-          <Colxx xxs="12" sm="4" md="4" lg="5" className="d-flex justify-content-end mt-2 mt-sm-0">
+          {/* Filtros y botones */}
+          <div className="d-flex flex-nowrap">
             {props.filterOptions && props.filterOptions.length > 0 && (
               <Dropdown 
                 isOpen={filterDropdownOpen} 
@@ -119,128 +192,217 @@ const DataListSimple = (props: any) => {
               </Dropdown>
             )}
             
-            {selectedItems.length > 0 && (
+            {selectedItems.length > 0 && props.deleteData && (
               <Button 
                 color="danger" 
                 size="sm" 
                 className="mr-2"
                 onClick={handleDeleteSelected}
               >
+                <i className="simple-icon-trash mr-1"></i>
                 Eliminar ({selectedItems.length})
               </Button>
             )}
             
-            <Button 
-              color="primary" 
-              size="sm" 
-              className="mr-2" 
-              onClick={() => props.refreshDataTable && props.refreshDataTable()}
-            >
-              <i className="simple-icon-refresh" /> Actualizar
-            </Button>
-            
-            {canCreate && props.toggleModal && (
+            {props.refreshData && (
               <Button 
-                color="primary" 
+                color="info" 
                 size="sm" 
-                onClick={props.toggleModal}
+                className="mr-2" 
+                onClick={handleRefresh}
+                disabled={loading}
               >
-                <i className="simple-icon-plus" /> Agregar Nuevo
+                <i className={`${loading ? 'simple-icon-refresh spinning' : 'simple-icon-refresh'}`}></i>
+                {window.innerWidth > 576 && <span className="ml-1">Actualizar</span>}
               </Button>
             )}
-          </Colxx>
-        </Row>
+            
+            {canCreate && props.onAddNew && (
+              <Button 
+                color="primary" 
+                size="sm"
+                onClick={props.onAddNew}
+              >
+                <i className="simple-icon-plus mr-1"></i>
+                {props.addButtonLabel || "Agregar Nuevo"}
+              </Button>
+            )}
+          </div>
+        </div>
+
+        {/* Información de paginación */}
+        {data.length > 0 && (
+          <div className="text-muted small mb-3">
+            Mostrando {startIndex + 1}-{endIndex} de {data.length} registros
+          </div>
+        )}
         
-        <Table hover responsive className="rounded">
-          <thead>
-            <tr>
-              <th className="w-10">
-                <div className="custom-control custom-checkbox">
-                  <input
-                    type="checkbox"
-                    className="custom-control-input"
-                    id="checkAll"
-                    checked={currentData.length > 0 && selectedItems.length === currentData.length}
-                    onChange={toggleSelectAll}
-                  />
-                  <label className="custom-control-label" htmlFor="checkAll"></label>
-                </div>
-              </th>
-              {props.columns.map((column: any, index: number) => (
-                <th key={index} style={{width: column.width || 'auto'}}>
-                  {column.label}
-                </th>
-              ))}
-              <th>Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            {currentData.length === 0 ? (
-              <tr>
-                <td colSpan={props.columns.length + 2} className="text-center p-4">
-                  No hay datos disponibles
-                </td>
-              </tr>
-            ) : (
-              currentData.map((row: any) => {
-                // Aplicar clase personalizada a la fila si se proporciona
-                const trClass = props.trClass ? props.trClass(row) : '';
-                
-                return (
-                  <tr key={row.id} className={trClass}>
-                    <td>
+        {/* Contenido principal */}
+        {loading ? (
+          <div className="text-center py-5">
+            <Loader size={50} />
+          </div>
+        ) : (
+          <div className="table-responsive">
+            <Table hover className="mb-0">
+              <thead>
+                <tr className="bg-light">
+                  {props.selectable !== false && (
+                    <th style={{width: '40px'}}>
                       <div className="custom-control custom-checkbox">
                         <input
                           type="checkbox"
                           className="custom-control-input"
-                          id={`check_${row.id}`}
-                          checked={!!selectedItems.find(i => i.id === row.id)}
-                          onChange={() => toggleItemSelection(row)}
+                          id="checkAll"
+                          checked={currentData.length > 0 && selectedItems.length === currentData.length}
+                          onChange={toggleSelectAll}
                         />
-                        <label className="custom-control-label" htmlFor={`check_${row.id}`}></label>
+                        <label className="custom-control-label" htmlFor="checkAll"></label>
                       </div>
-                    </td>
-                    {props.columns.map((column: any, index: number) => (
-                      <td key={index}>{renderCell(row, column)}</td>
-                    ))}
-                    <td>
-                      {props.actions && props.actions.map((action: any) => {
-                        // Verificar si la acción tiene una condición y si se cumple
-                        if (action.condition && !action.condition(row)) {
-                          return null;
-                        }
-                        
-                        return (
-                          <Button
-                            key={action.id}
-                            color={action.color || 'secondary'}
-                            size="sm"
-                            className="mr-1 mb-1"
-                            onClick={() => action.action(row)}
-                            title={action.label}
-                          >
-                            {action.icon && <i className={action.icon} />}
-                            {!action.icon && action.label}
-                          </Button>
-                        );
-                      })}
+                    </th>
+                  )}
+                  {props.columns.map((column: any, index: number) => (
+                    <th 
+                      key={index} 
+                      style={{width: column.width || 'auto'}}
+                      className={column.sortable !== false ? "cursor-pointer" : ""}
+                      onClick={() => column.sortable !== false && handleSort(column.column)}
+                    >
+                      <div className="d-flex align-items-center">
+                        {column.label}
+                        {column.sortable !== false && (
+                          <div className="sort-icons ml-1">
+                            {sortField === column.column ? (
+                              <i className={`simple-icon-arrow-${sortDirection === 'asc' ? 'up' : 'down'} font-weight-bold`}></i>
+                            ) : (
+                              <i className="simple-icon-arrow-down-circle text-muted" style={{fontSize: '0.6rem'}}></i>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </th>
+                  ))}
+                  {props.actions && props.actions.length > 0 && (
+                    <th style={{width: props.actionsWidth || '150px'}} className="text-center">
+                      {props.actionsLabel || "Acciones"}
+                    </th>
+                  )}
+                </tr>
+              </thead>
+              <tbody>
+                {currentData.length === 0 ? (
+                  <tr>
+                    <td colSpan={props.columns.length + (props.selectable !== false ? 1 : 0) + (props.actions && props.actions.length > 0 ? 1 : 0)} className="text-center p-5">
+                      <div className="my-3">
+                        <i className={props.emptyIcon || "iconsminds-file"} style={{fontSize: '3rem', opacity: 0.3}}></i>
+                      </div>
+                      <h5>{props.emptyMessage || "No hay datos disponibles"}</h5>
+                      <p className="text-muted">{props.emptyDescription || ""}</p>
                     </td>
                   </tr>
-                );
-              })
-            )}
-          </tbody>
-        </Table>
+                ) : (
+                  currentData.map((row: any) => {
+                    // Aplicar clase personalizada a la fila si se proporciona
+                    const trClass = props.trClass ? props.trClass(row) : '';
+                    const trStyle = props.trStyle ? props.trStyle(row) : {};
+                    
+                    return (
+                      <tr 
+                        key={row.id} 
+                        className={trClass} 
+                        style={{
+                          ...trStyle, 
+                          cursor: props.onRowClick ? 'pointer' : 'default'
+                        }}
+                      >
+                        {props.selectable !== false && (
+                          <td onClick={(e) => e.stopPropagation()}>
+                            <div className="custom-control custom-checkbox">
+                              <input
+                                type="checkbox"
+                                className="custom-control-input"
+                                id={`check_${row.id}`}
+                                checked={!!selectedItems.find(i => i.id === row.id)}
+                                onChange={() => toggleItemSelection(row)}
+                              />
+                              <label className="custom-control-label" htmlFor={`check_${row.id}`}></label>
+                            </div>
+                          </td>
+                        )}
+                        {props.columns.map((column: any, index: number) => (
+                          <td 
+                            key={index} 
+                            onClick={() => props.onRowClick && props.onRowClick(row)}
+                            className="align-middle"
+                          >
+                            {renderCell(row, column)}
+                          </td>
+                        ))}
+                        {props.actions && props.actions.length > 0 && (
+                          <td className="text-center" onClick={(e) => e.stopPropagation()}>
+                            <div className="d-flex flex-wrap justify-content-center">
+                              {props.actions.map((action: any, i: number) => {
+                                // Verificar si la acción tiene una condición y si se cumple
+                                if (action.condition && !action.condition(row)) {
+                                  return null;
+                                }
+                                
+                                return (
+                                  <Button
+                                    key={`${action.id || i}`}
+                                    color={action.color || 'secondary'}
+                                    size="sm"
+                                    className="mx-1 mb-1"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      action.action(row);
+                                    }}
+                                    title={action.tooltip || action.label}
+                                  >
+                                    {action.icon && <i className={`${action.icon}`} />}
+                                    {action.label && <span className="ml-1">{action.label}</span>}
+                                  </Button>
+                                );
+                              })}
+                            </div>
+                          </td>
+                        )}
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </Table>
+          </div>
+        )}
         
-        {totalPages > 1 && (
-          <Row className="mt-3">
-            <Colxx xxs="12">
-              <Pagination className="justify-content-center" listClassName="justify-content-center">
+        {/* Paginación */}
+        {totalPages > 0 && (
+          <div className="d-flex justify-content-between align-items-center mt-3">
+            <div>
+              <select 
+                className="form-control form-control-sm" 
+                value={pageSize}
+                style={{width: 'auto'}}
+                onChange={(e) => {
+                  setPageSize(parseInt(e.target.value));
+                  setCurrentPage(1);
+                }}
+              >
+                <option value="5">5 por página</option>
+                <option value="10">10 por página</option>
+                <option value="20">20 por página</option>
+                <option value="50">50 por página</option>
+              </select>
+            </div>
+            
+            {totalPages > 1 && (
+              <Pagination className="mb-0" size="sm">
                 <PaginationItem disabled={currentPage === 1}>
                   <PaginationLink first onClick={() => setCurrentPage(1)} />
                 </PaginationItem>
                 <PaginationItem disabled={currentPage === 1}>
-                  <PaginationLink previous onClick={() => setCurrentPage(currentPage - 1)} />
+                  <PaginationLink previous onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} />
                 </PaginationItem>
                 
                 {Array.from({length: Math.min(5, totalPages)}, (_, i) => {
@@ -266,40 +428,45 @@ const DataListSimple = (props: any) => {
                 })}
                 
                 <PaginationItem disabled={currentPage === totalPages}>
-                  <PaginationLink next onClick={() => setCurrentPage(currentPage + 1)} />
+                  <PaginationLink next onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))} />
                 </PaginationItem>
                 <PaginationItem disabled={currentPage === totalPages}>
                   <PaginationLink last onClick={() => setCurrentPage(totalPages)} />
                 </PaginationItem>
               </Pagination>
-            </Colxx>
-          </Row>
+            )}
+          </div>
         )}
-        
-        <Row className="mt-3">
-          <Colxx xxs="12" className="d-flex justify-content-center">
-            <Dropdown isOpen={dropdownOpen} toggle={() => setDropdownOpen(!dropdownOpen)}>
-              <DropdownToggle caret color="outline-primary" size="sm">
-                {pageSize} por página
-              </DropdownToggle>
-              <DropdownMenu>
-                {[5, 10, 20, 50].map((size) => (
-                  <DropdownItem 
-                    key={size} 
-                    onClick={() => {
-                      setPageSize(size);
-                      setCurrentPage(1);
-                    }}
-                    active={pageSize === size}
-                  >
-                    {size} por página
-                  </DropdownItem>
-                ))}
-              </DropdownMenu>
-            </Dropdown>
-          </Colxx>
-        </Row>
       </CardBody>
+      
+      <style>
+        {`
+          .spinning {
+            animation: spin 1s infinite linear;
+          }
+          
+          @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+          }
+          
+          .cursor-pointer {
+            cursor: pointer;
+          }
+
+          .sort-icons {
+            display: inline-block;
+            width: 10px;
+          }
+          
+          @media (max-width: 576px) {
+            .search-container {
+              max-width: 100% !important;
+              margin-bottom: 0.5rem !important;
+            }
+          }
+        `}
+      </style>
     </Card>
   );
 };

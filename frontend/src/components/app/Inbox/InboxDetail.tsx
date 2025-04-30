@@ -1,28 +1,25 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { connect } from 'react-redux';
-import { Row, Button, Card, CardBody, Modal, ModalHeader, ModalBody, ModalFooter, Table } from 'reactstrap';
+import { Row, Col, Button, Modal, ModalHeader, ModalBody, ModalFooter, Badge } from 'reactstrap';
 import moment from 'moment';
 import 'moment/locale/es';
 
 import { createNotification } from '../../../helpers/Notification';
 import * as inboxActions from '../../../stores/actions/InboxAction';
 import { Colxx } from '../../common/CustomBootstrap';
-import { Loader } from '../../common/Loader';
+import DataListSimple from '../../common/Data/DataListSimple';
 import InboxCreate from './InboxCreate';
 
 const InboxDetail = (props: any) => {
   // Estados
   const [messages, setMessages] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [viewModalOpen, setViewModalOpen] = useState(false);
   const [deleteConfirmModalOpen, setDeleteConfirmModalOpen] = useState(false);
   const [selectedMessage, setSelectedMessage] = useState<any>(null);
   const [selectedItems, setSelectedItems] = useState<any[]>([]);
   const [filterStatus, setFilterStatus] = useState('all');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
 
   // Usuario y permisos
   const userRoles = props.loginReducer?.role || {};
@@ -51,7 +48,8 @@ const InboxDetail = (props: any) => {
 
   // Cargar mensajes
   const loadMessages = useCallback(async () => {
-    if (!props?.loginReducer?.userId) return;
+    if (!props?.loginReducer?.userId) return Promise.resolve();
+    
     setLoading(true);
     try {
       const listData = await props.getListAllInbox(props.loginReducer.userId);
@@ -79,14 +77,6 @@ const InboxDetail = (props: any) => {
           mappedMessages = mappedMessages.filter(msg => !msg.dateRead);
         }
         
-        // Aplicar búsqueda si existe
-        if (searchTerm) {
-          mappedMessages = mappedMessages.filter(msg => {
-            const searchContent = `${msg.title} ${msg.message} ${msg.createdByUser?.name || ''} ${msg.createdByUser?.lastName || ''}`.toLowerCase();
-            return searchContent.includes(searchTerm.toLowerCase());
-          });
-        }
-        
         setMessages(mappedMessages);
       } else {
         setMessages([]);
@@ -98,7 +88,9 @@ const InboxDetail = (props: any) => {
     } finally {
       setLoading(false);
     }
-  }, [props, filterStatus, searchTerm]);
+    
+    return Promise.resolve();
+  }, [props, filterStatus]);
 
   // Efecto inicial
   useEffect(() => {
@@ -108,10 +100,18 @@ const InboxDetail = (props: any) => {
   // Marcar como leído (con notificación explícita)
   const markAsRead = async (message: any) => {
     if (message.dateRead) return;
+    
     try {
       await props.updateInbox({ dateRead: new Date().toISOString() }, message.id, false);
-      createNotification('success', 'success', '');
-      loadMessages();
+      createNotification('success', 'Mensaje leído', 'El mensaje ha sido marcado como leído');
+      
+      setMessages(prevMessages => 
+        prevMessages.map(msg => 
+          msg.id === message.id 
+            ? { ...msg, dateRead: new Date().toISOString() } 
+            : msg
+        )
+      );
     } catch (error) {
       createNotification('error', 'Error', 'No se pudo marcar como leído el mensaje');
     }
@@ -120,9 +120,17 @@ const InboxDetail = (props: any) => {
   // Marcar como leído silenciosamente (sin notificación)
   const markAsReadSilently = async (message: any) => {
     if (message.dateRead) return;
+    
     try {
       await props.updateInbox({ dateRead: new Date().toISOString() }, message.id, false);
-      loadMessages();
+      
+      setMessages(prevMessages => 
+        prevMessages.map(msg => 
+          msg.id === message.id 
+            ? { ...msg, dateRead: new Date().toISOString() } 
+            : msg
+        )
+      );
     } catch (error) {
       console.error("Error al marcar mensaje como leído:", error);
     }
@@ -132,8 +140,10 @@ const InboxDetail = (props: any) => {
   const viewMessage = (message: any) => {
     setSelectedMessage(message);
     setViewModalOpen(true);
+    
+    // Marcar como leído silenciosamente al abrir
     if (!message.dateRead) {
-      markAsReadSilently(message);  // Marca como leído sin notificación
+      markAsReadSilently(message);
     }
   };
 
@@ -141,10 +151,10 @@ const InboxDetail = (props: any) => {
   const deleteMessage = async (id: string) => {
     try {
       await props.deleteInbox(id, true);
-      createNotification('success', 'success', '');
+      createNotification('success', 'Mensaje eliminado', 'El mensaje ha sido eliminado correctamente');
       setViewModalOpen(false);
       setDeleteConfirmModalOpen(false);
-      loadMessages();
+      loadMessages(); 
     } catch (error) {
       createNotification('error', 'Error', 'No se pudo eliminar el mensaje');
     }
@@ -155,10 +165,15 @@ const InboxDetail = (props: any) => {
     try {
       const promises = selectedItems.map(item => props.deleteInbox(item.id, false));
       await Promise.all(promises);
-      createNotification('success', 'success', '');
-      setSelectedItems([]);
+      
+      createNotification('success', 'Mensajes eliminados', `Se han eliminado ${selectedItems.length} mensajes correctamente`);
       setDeleteConfirmModalOpen(false);
-      loadMessages();
+      
+      setMessages(prevMessages => 
+        prevMessages.filter(msg => !selectedItems.some(item => item.id === msg.id))
+      );
+      
+      setSelectedItems([]);
     } catch (error) {
       createNotification('error', 'Error', 'No se pudieron eliminar algunos mensajes');
     }
@@ -173,391 +188,179 @@ const InboxDetail = (props: any) => {
     setDeleteConfirmModalOpen(true);
   };
 
-  // Toggle selección de mensaje
-  const toggleSelectMessage = (message: any) => {
-    if (selectedItems.find(item => item.id === message.id)) {
-      setSelectedItems(selectedItems.filter(item => item.id !== message.id));
-    } else {
-      setSelectedItems([...selectedItems, message]);
-    }
-  };
-
-  // Seleccionar/deseleccionar todos
-  const toggleSelectAll = () => {
-    if (selectedItems.length === paginatedMessages.length) {
-      setSelectedItems([]);
-    } else {
-      setSelectedItems([...paginatedMessages]);
-    }
-  };
-
   // Crear nuevo mensaje
   const onSubmit = async (dataForm: any) => {
     try {
-      const id = await props.saveNewInbox(dataForm);
-      if (id) {
-        setCreateModalOpen(false);
-        createNotification('success', 'success', '');
-        loadMessages();
-      }
+      await props.saveNewInbox(dataForm);
+      setCreateModalOpen(false);
+      createNotification('success', 'Mensaje enviado', 'El mensaje ha sido enviado correctamente');
+      loadMessages(); 
     } catch (error) {
       createNotification('error', 'Error', 'No se pudo enviar el mensaje');
     }
   };
 
-  // Filtrar por estado
-  const changeFilter = (filter: string) => {
-    setFilterStatus(filter);
-    setCurrentPage(1);
-  };
+  // Definir columnas para DataListSimple
+  const columns = [
+    {
+      column: "title",
+      label: "Título",
+      width: "25%",
+      sortable: true,
+      render: (row: any) => (
+        <div className="d-flex align-items-center">
+          <i 
+            className={row.dateRead ? 'iconsminds-mail-open mr-2' : 'iconsminds-mail mr-2'} 
+            style={{ fontSize: '1.2rem', color: row.dateRead ? '#6c757d' : '#17a2b8' }}
+          />
+          <span className={!row.dateRead ? 'font-weight-bold' : ''}>
+            {truncateText(row.title, 30)}
+          </span>
+          {!row.dateRead && (
+            <Badge color="info" pill className="ml-2">Nuevo</Badge>
+          )}
+        </div>
+      )
+    },
+    {
+      column: "message",
+      label: "Mensaje",
+      width: "30%",
+      sortable: true,
+      render: (row: any) => (
+        <span className={!row.dateRead ? 'font-weight-bold' : ''}>
+          {truncateText(row.message, 40)}
+        </span>
+      )
+    },
+    {
+      column: "createdByUser",
+      label: "Autor",
+      width: "20%",
+      sortable: true,
+      render: (row: any) => (
+        <span className={!row.dateRead ? 'font-weight-bold' : ''}>
+          {row.createdByUser?.name ? 
+            `${row.createdByUser.name || ''} ${row.createdByUser.lastName || ''}`.trim() 
+            : 'Sistema'
+          }
+        </span>
+      )
+    },
+    {
+      column: "dateSend",
+      label: "Fecha de envío",
+      width: "15%",
+      sortable: true,
+      render: (row: any) => (
+        <span className={!row.dateRead ? 'font-weight-bold' : ''}>
+          {formatDateShort(row.dateSend)}
+        </span>
+      )
+    }
+  ];
 
-  // Calcular paginación
-  const startIndex = (currentPage - 1) * pageSize;
-  const endIndex = Math.min(startIndex + pageSize, messages.length);
-  const paginatedMessages = messages.slice(startIndex, endIndex);
-  const totalPages = Math.ceil(messages.length / pageSize);
+  // Definir acciones para DataListSimple
+  const actions = [
+    {
+      id: 'view',
+      icon: 'simple-icon-eye',
+      color: 'info',
+      action: viewMessage,
+      tooltip: 'Ver detalle del mensaje'
+    },
+    {
+      id: 'delete',
+      icon: 'simple-icon-trash',
+      color: 'danger',
+      action: confirmDelete,
+      tooltip: 'Eliminar mensaje'
+    }
+  ];
 
-  // Mensajes de estado según filtro
-  const getEmptyStateMessage = () => {
+  // Configurar opciones de filtro
+  const filterOptions = [
+    { label: 'Todos los mensajes', value: 'all' },
+    { label: 'Mensajes leídos', value: 'read' },
+    { label: 'Mensajes no leídos', value: 'unread' }
+  ];
+
+  // Configurar estilo personalizado para filas
+  const trStyle = (row: any) => ({
+    borderLeft: !row.dateRead ? '4px solid #17a2b8' : 'none'
+  });
+
+  // Estados vacíos según el filtro
+  const getEmptyStateConfig = () => {
     switch (filterStatus) {
       case 'read':
         return {
           icon: 'iconsminds-mail-open',
-          title: 'No tienes mensajes leídos',
+          message: 'No tienes mensajes leídos',
           description: 'Los mensajes que hayas leído aparecerán aquí'
         };
       case 'unread':
         return {
           icon: 'iconsminds-mail',
-          title: 'No tienes mensajes pendientes',
+          message: 'No tienes mensajes pendientes',
           description: '¡Felicidades! Has leído todos tus mensajes'
         };
       default:
         return {
           icon: 'iconsminds-empty-mailbox',
-          title: 'No hay mensajes',
+          message: 'No hay mensajes',
           description: 'Tu bandeja de entrada está vacía. Los nuevos mensajes aparecerán aquí.'
         };
     }
   };
-
-  // Obtener contadores para los botones de filtro
-  const unreadCount = messages.filter(msg => !msg.dateRead).length;
-  const readCount = messages.filter(msg => msg.dateRead).length;
+  
+  const emptyState = getEmptyStateConfig();
 
   return (
     <>
-      {/* Encabezado */}
-      <div className="d-flex justify-content-between align-items-center mb-3">
-        <div className="d-flex align-items-center">
-          <i className="iconsminds-mail mr-2" style={{ fontSize: '1.5rem' }}></i>
-          <h1 className="mb-0">Bandeja de Entrada</h1>
-        </div>
-        <div className="d-flex">
-          <input
-            type="text"
-            className="form-control mr-2"
-            placeholder="Buscar..."
-            value={searchTerm}
-            onChange={(e) => {
-              setSearchTerm(e.target.value);
-              setCurrentPage(1);
-            }}
-            style={{ maxWidth: '200px' }}
-          />
-          <div className="btn-group mr-2">
-            <Button 
-              color={filterStatus === 'all' ? 'primary' : 'outline-primary'} 
-              onClick={() => changeFilter('all')}
-              size="sm"
-              className="px-3"
-            >
-              Todos <span className="badge badge-light ml-1">{messages.length}</span>
-            </Button>
-            <Button 
-              color={filterStatus === 'read' ? 'primary' : 'outline-primary'} 
-              onClick={() => changeFilter('read')}
-              size="sm"
-              className="px-3"
-            >
-              Leídos <span className="badge badge-light ml-1">{readCount}</span>
-            </Button>
-            <Button 
-              color={filterStatus === 'unread' ? 'primary' : 'outline-primary'} 
-              onClick={() => changeFilter('unread')}
-              size="sm"
-              className="px-3"
-            >
-              No leídos <span className="badge badge-light ml-1">{unreadCount}</span>
-            </Button>
+      <Row className="mb-4">
+        <Colxx xxs="12">
+          <div className="d-flex align-items-center">
+            <i className="iconsminds-mail mr-2" style={{ fontSize: '1.5rem' }}></i>
+            <h1 className="mb-0">Bandeja de Entrada</h1>
           </div>
-          {selectedItems.length > 0 && (
-            <Button 
-              color="danger" 
-              className="mr-2"
-              size="sm"
-              onClick={() => confirmDelete()}
-            >
-              <i className="simple-icon-trash mr-1"></i>
-              Eliminar ({selectedItems.length})
-            </Button>
-          )}
-          <Button 
-            color="info" 
-            className="mr-2"
-            size="sm"
-            onClick={loadMessages}
-          >
-            <i className="simple-icon-refresh mr-1"></i>
-            Actualizar
-          </Button>
-          {canCreateMessage && (
-            <Button
-              color="primary"
-              size="sm"
-              onClick={() => setCreateModalOpen(true)}
-            >
-              <i className="simple-icon-plus mr-1"></i>
-              Agregar Nuevo
-            </Button>
-          )}
-        </div>
-      </div>
+        </Colxx>
+      </Row>
 
-      <div className="separator mb-4"></div>
-
-      {/* Contenido principal */}
-      {loading ? (
-        <div className="text-center p-5">
-          <Loader />
-        </div>
-      ) : (
-        <Card className="mb-4">
-          <CardBody className="p-0">
-            {messages.length > 0 ? (
-              <>
-                <Table hover responsive className="m-0">
-                  <thead>
-                    <tr>
-                      <th style={{ width: '40px' }} className="text-center">
-                        <div className="custom-control custom-checkbox">
-                          <input
-                            type="checkbox"
-                            className="custom-control-input"
-                            id="checkAll"
-                            checked={paginatedMessages.length > 0 && selectedItems.length === paginatedMessages.length}
-                            onChange={toggleSelectAll}
-                          />
-                          <label className="custom-control-label" htmlFor="checkAll"></label>
-                        </div>
-                      </th>
-                      <th style={{ width: '25%' }}>Título</th>
-                      <th style={{ width: '30%' }}>Mensaje</th>
-                      <th style={{ width: '20%' }}>Autor</th>
-                      <th style={{ width: '15%' }}>Fecha de envío</th>
-                      <th style={{ width: '180px', textAlign: 'center' }}>Acciones</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {paginatedMessages.map((message) => (
-                      <tr 
-                        key={message.id} 
-                        className={!message.dateRead ? 'font-weight-bold' : ''}
-                        style={!message.dateRead ? {borderLeft: '4px solid #17a2b8'} : {}}
-                      >
-                        <td className="text-center align-middle">
-                          <div className="custom-control custom-checkbox">
-                            <input
-                              type="checkbox"
-                              className="custom-control-input"
-                              id={`check_${message.id}`}
-                              checked={!!selectedItems.find(item => item.id === message.id)}
-                              onChange={() => toggleSelectMessage(message)}
-                            />
-                            <label className="custom-control-label" htmlFor={`check_${message.id}`}></label>
-                          </div>
-                        </td>
-                        <td className="align-middle" onClick={() => viewMessage(message)} style={{cursor: 'pointer'}}>
-                          <div className="d-flex align-items-center">
-                            <i className={message.dateRead ? 'iconsminds-mail-open mr-2' : 'iconsminds-mail mr-2'} 
-                              style={{ fontSize: '1.2rem', color: message.dateRead ? '#6c757d' : '#17a2b8' }}></i>
-                            {truncateText(message.title, 35)}
-                            {!message.dateRead && (
-                              <span className="badge badge-info ml-2">Nuevo</span>
-                            )}
-                          </div>
-                        </td>
-                        <td className="align-middle" onClick={() => viewMessage(message)} style={{cursor: 'pointer'}}>
-                          {truncateText(message.message, 40)}
-                        </td>
-                        <td className="align-middle" onClick={() => viewMessage(message)} style={{cursor: 'pointer'}}>
-                          {message.createdByUser?.name ? 
-                            `${message.createdByUser.name || ''} ${message.createdByUser.lastName || ''}`.trim() 
-                            : 'Sistema'
-                          }
-                        </td>
-                        <td className="align-middle" onClick={() => viewMessage(message)} style={{cursor: 'pointer'}}>
-                          {formatDateShort(message.dateSend)}
-                        </td>
-                        <td className="text-right">
-                          <div className="d-flex justify-content-end">
-                            <Button 
-                              color="info" 
-                              size="sm" 
-                              className="mr-1 px-2"
-                              onClick={() => viewMessage(message)}
-                              title="Ver mensaje"
-                            >
-                              <i className="simple-icon-eye mr-1"></i> Ver
-                            </Button>
-                            {!message.dateRead && (
-                              <Button 
-                                color="success" 
-                                size="sm" 
-                                className="mr-1 px-2"
-                                onClick={() => markAsRead(message)}
-                                title="Marcar como leído"
-                              >
-                                <i className="simple-icon-check mr-1"></i> Leído
-                              </Button>
-                            )}
-                            <Button 
-                              color="danger" 
-                              size="sm"
-                              className="px-2"
-                              onClick={() => confirmDelete(message)}
-                              title="Eliminar mensaje"
-                            >
-                              <i className="simple-icon-trash mr-1"></i> Eliminar
-                            </Button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </Table>
-
-                {/* Paginación */}
-                <div className="d-flex justify-content-between align-items-center p-3">
-                  <div>
-                    Mostrando {startIndex + 1}-{endIndex} de {messages.length}
-                  </div>
-                  <div className="d-flex">
-                    <div className="mr-3">
-                      <select 
-                        className="form-control form-control-sm" 
-                        value={pageSize}
-                        onChange={(e) => {
-                          setPageSize(parseInt(e.target.value));
-                          setCurrentPage(1);
-                        }}
-                      >
-                        <option value="5">5 por página</option>
-                        <option value="10">10 por página</option>
-                        <option value="20">20 por página</option>
-                        <option value="50">50 por página</option>
-                      </select>
-                    </div>
-                    <div>
-                      <nav>
-                        <ul className="pagination pagination-sm mb-0">
-                          <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
-                            <button 
-                              className="page-link" 
-                              onClick={() => setCurrentPage(1)}
-                              disabled={currentPage === 1}
-                            >
-                              «
-                            </button>
-                          </li>
-                          <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
-                            <button 
-                              className="page-link" 
-                              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                              disabled={currentPage === 1}
-                            >
-                              ‹
-                            </button>
-                          </li>
-                          {Array.from({length: Math.min(5, totalPages)}, (_, i) => {
-                            let pageNum = currentPage;
-                            if (currentPage <= 3) {
-                              pageNum = i + 1;
-                            } else if (currentPage >= totalPages - 2) {
-                              pageNum = totalPages - 4 + i;
-                            } else {
-                              pageNum = currentPage - 2 + i;
-                            }
-                            
-                            if (pageNum <= totalPages && pageNum > 0) {
-                              return (
-                                <li 
-                                  className={`page-item ${currentPage === pageNum ? 'active' : ''}`}
-                                  key={pageNum}
-                                >
-                                  <button 
-                                    className="page-link" 
-                                    onClick={() => setCurrentPage(pageNum)}
-                                  >
-                                    {pageNum}
-                                  </button>
-                                </li>
-                              );
-                            }
-                            return null;
-                          })}
-                          <li className={`page-item ${currentPage === totalPages ? 'disabled' : ''}`}>
-                            <button 
-                              className="page-link" 
-                              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                              disabled={currentPage === totalPages}
-                            >
-                              ›
-                            </button>
-                          </li>
-                          <li className={`page-item ${currentPage === totalPages ? 'disabled' : ''}`}>
-                            <button 
-                              className="page-link" 
-                              onClick={() => setCurrentPage(totalPages)}
-                              disabled={currentPage === totalPages}
-                            >
-                              »
-                            </button>
-                          </li>
-                        </ul>
-                      </nav>
-                    </div>
-                  </div>
-                </div>
-              </>
-            ) : (
-              <div className="text-center p-5">
-                {/* Mensaje personalizado según el filtro seleccionado */}
-                <div className="mb-4">
-                  <i className={getEmptyStateMessage().icon} style={{ fontSize: '5rem', opacity: '0.3' }}></i>
-                </div>
-                <h2 className="font-weight-bold">{getEmptyStateMessage().title}</h2>
-                <p className="text-muted mb-4">{getEmptyStateMessage().description}</p>
-                {canCreateMessage && (
-                  <Button 
-                    color="primary" 
-                    onClick={() => setCreateModalOpen(true)}
-                  >
-                    <i className="simple-icon-plus mr-2"></i>
-                    Enviar un mensaje
-                  </Button>
-                )}
-              </div>
-            )}
-          </CardBody>
-        </Card>
-      )}
+      <Row>
+        <Colxx xxs="12">
+          <DataListSimple
+            data={messages}
+            columns={columns}
+            actions={actions}
+            onRowClick={viewMessage}
+            trStyle={trStyle}
+            actionsWidth="100px"
+            refreshData={loadMessages}
+            loading={loading}
+            emptyIcon={emptyState.icon}
+            emptyMessage={emptyState.message}
+            emptyDescription={emptyState.description}
+            onAddNew={() => setCreateModalOpen(true)}
+            addButtonLabel="Nuevo"
+            canCreate={canCreateMessage}
+            searchPlaceholder="Buscar mensajes..."
+            filterOptions={filterOptions}
+            filterValue={filterStatus}
+            onFilterChange={setFilterStatus}
+            deleteData={(id: string) => deleteMessage(id)}
+            selectable={true}
+            searchFields={['title', 'message']}
+          />
+        </Colxx>
+      </Row>
 
       {/* Modal para ver mensaje en detalle */}
       <Modal
         isOpen={viewModalOpen}
         toggle={() => setViewModalOpen(!viewModalOpen)}
         size="lg"
+        backdrop="static"
       >
         {selectedMessage && (
           <>
@@ -569,8 +372,8 @@ const InboxDetail = (props: any) => {
               </div>
             </ModalHeader>
             <ModalBody>
-              <div className="d-flex justify-content-between mb-3">
-                <div>
+              <div className="d-flex justify-content-between mb-3 flex-wrap">
+                <div className="mb-2">
                   <p className="mb-1"><strong>De:</strong> {
                     selectedMessage.createdByUser 
                       ? `${selectedMessage.createdByUser.name || ''} ${selectedMessage.createdByUser.lastName || ''}`.trim() 
@@ -578,7 +381,7 @@ const InboxDetail = (props: any) => {
                   }</p>
                   <p className="mb-1"><strong>Enviado:</strong> {formatDate(selectedMessage.dateSend)}</p>
                 </div>
-                <div>
+                <div className="mb-2">
                   {selectedMessage.dateRead ? (
                     <p className="mb-1 text-success">
                       <i className="simple-icon-check mr-1"></i>
@@ -608,7 +411,7 @@ const InboxDetail = (props: any) => {
               )}
               <Button color="danger" onClick={() => confirmDelete(selectedMessage)}>
                 <i className="simple-icon-trash mr-2"></i>
-                Eliminar mensaje
+                Eliminar
               </Button>
               <Button color="secondary" onClick={() => setViewModalOpen(false)}>
                 Cerrar
@@ -622,6 +425,7 @@ const InboxDetail = (props: any) => {
       <Modal
         isOpen={deleteConfirmModalOpen}
         toggle={() => setDeleteConfirmModalOpen(!deleteConfirmModalOpen)}
+        backdrop="static"
       >
         <ModalHeader toggle={() => setDeleteConfirmModalOpen(false)} className="bg-danger text-white">
           <i className="simple-icon-trash mr-2"></i>
@@ -638,7 +442,7 @@ const InboxDetail = (props: any) => {
         <ModalFooter>
           <Button color="danger" onClick={deleteSelectedMessages}>
             <i className="simple-icon-trash mr-2"></i>
-            Confirmar eliminación
+            Eliminar
           </Button>
           <Button color="light" onClick={() => setDeleteConfirmModalOpen(false)}>
             Cancelar
