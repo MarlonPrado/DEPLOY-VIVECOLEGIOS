@@ -30,7 +30,6 @@ const DataListSimple = (props: any) => {
   // Filtrado
   useEffect(() => {
     if (searchTerm) {
-      // Si hay campos específicos de búsqueda definidos, úsalos
       if (props.searchFields && props.searchFields.length > 0) {
         const filtered = props.data?.filter((item: any) => {
           return props.searchFields.some((field: string) => {
@@ -40,7 +39,6 @@ const DataListSimple = (props: any) => {
         });
         setData(filtered || []);
       } else {
-        // Búsqueda en todos los campos
         const filtered = props.data?.filter((item: any) => {
           const values = Object.values(item).join(' ').toLowerCase();
           return values.includes(searchTerm.toLowerCase());
@@ -50,7 +48,7 @@ const DataListSimple = (props: any) => {
     } else {
       setData(props.data || []);
     }
-    setCurrentPage(1); // Resetear a primera página al buscar
+    setCurrentPage(1);
   }, [searchTerm, props.data, props.searchFields]);
   
   // Ordenamiento
@@ -211,9 +209,9 @@ const DataListSimple = (props: any) => {
                 className="mr-2" 
                 onClick={handleRefresh}
                 disabled={loading}
+                title="Actualizar"
               >
                 <i className={`${loading ? 'simple-icon-refresh spinning' : 'simple-icon-refresh'}`}></i>
-                {window.innerWidth > 576 && <span className="ml-1">Actualizar</span>}
               </Button>
             )}
             
@@ -272,11 +270,12 @@ const DataListSimple = (props: any) => {
                         {column.label}
                         {column.sortable !== false && (
                           <div className="sort-icons ml-1">
-                            {sortField === column.column ? (
-                              <i className={`simple-icon-arrow-${sortDirection === 'asc' ? 'up' : 'down'} font-weight-bold`}></i>
-                            ) : (
-                              <i className="simple-icon-arrow-down-circle text-muted" style={{fontSize: '0.6rem'}}></i>
-                            )}
+                            <div className="d-flex flex-column">
+                              <i className={`simple-icon-arrow-up ${sortField === column.column && sortDirection === 'asc' ? 'text-primary' : 'text-muted'}`} 
+                                 style={{fontSize: '0.6rem', marginBottom: '-3px'}}></i>
+                              <i className={`simple-icon-arrow-down ${sortField === column.column && sortDirection === 'desc' ? 'text-primary' : 'text-muted'}`} 
+                                 style={{fontSize: '0.6rem'}}></i>
+                            </div>
                           </div>
                         )}
                       </div>
@@ -340,7 +339,7 @@ const DataListSimple = (props: any) => {
                         ))}
                         {props.actions && props.actions.length > 0 && (
                           <td className="text-center" onClick={(e) => e.stopPropagation()}>
-                            <div className="d-flex flex-wrap justify-content-center">
+                            <div className="d-flex justify-content-center">
                               {props.actions.map((action: any, i: number) => {
                                 // Verificar si la acción tiene una condición y si se cumple
                                 if (action.condition && !action.condition(row)) {
@@ -352,15 +351,14 @@ const DataListSimple = (props: any) => {
                                     key={`${action.id || i}`}
                                     color={action.color || 'secondary'}
                                     size="sm"
-                                    className="mx-1 mb-1"
+                                    className="mx-1"
                                     onClick={(e) => {
                                       e.stopPropagation();
                                       action.action(row);
                                     }}
                                     title={action.tooltip || action.label}
                                   >
-                                    {action.icon && <i className={`${action.icon}`} />}
-                                    {action.label && <span className="ml-1">{action.label}</span>}
+                                    <i className={`${action.icon}`} />
                                   </Button>
                                 );
                               })}
@@ -455,8 +453,8 @@ const DataListSimple = (props: any) => {
           }
 
           .sort-icons {
-            display: inline-block;
             width: 10px;
+            margin-left: 5px;
           }
           
           @media (max-width: 576px) {
@@ -464,6 +462,16 @@ const DataListSimple = (props: any) => {
               max-width: 100% !important;
               margin-bottom: 0.5rem !important;
             }
+          }
+          
+          /* Desactivar hover default */
+          .table-hover tbody tr:hover {
+            background-color: initial;
+          }
+          
+          /* Aplicar hover personalizado solo para filas con cursor pointer */
+          .table-hover tbody tr[style*="cursor: pointer"]:hover {
+            background-color: rgba(0,0,0,0.03);
           }
         `}
       </style>

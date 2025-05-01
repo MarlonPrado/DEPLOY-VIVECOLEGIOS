@@ -209,6 +209,13 @@ const ForumListApp = React.lazy(() => {
   );
 });
 
+const ForumListApp2 = React.lazy(() => {
+  return import(
+    /* webpackChunkName: "ForumListApp" */ '../components/app/Aplications/Forums/ForumList2'
+  );
+});
+
+
 const Survey = React.lazy(() => {
   return import(/* webpackChunkName: "Survey" */ '../components/app/Aplications/Survey/Survey');
 });
@@ -986,6 +993,7 @@ const App = (props: any) => {
                     {/* APPLICATIONS */}
                     <Route path="/chat" element={<ChatApp />} />
                     <Route path="/foros" element={<ForumListApp />} />
+                    <Route path="/foros2" element={<ForumListApp2 />} />
                     <Route path="/foro-detalle" element={<ForumApp />} />
                     <Route path="/elecciones-personero" element={<ElectionsApp />} />
                     <Route path="/encuestas" element={<Survey />} />

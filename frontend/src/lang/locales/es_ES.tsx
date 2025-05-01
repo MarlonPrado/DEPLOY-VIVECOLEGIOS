@@ -247,7 +247,7 @@ const esMessages = {
   'forms.seeIcons': 'Ver íconos',
   'forms.clickToSelect': 'Haga click para seleccionar',
   'forms.code': 'Código',
-  'forms.description': 'Descripción',
+  'forms.description': 'Descripcion',
   'forms.menu': 'Menú',
   'forms.add': 'Añadir',
   'forms.select': 'Seleccionar',
