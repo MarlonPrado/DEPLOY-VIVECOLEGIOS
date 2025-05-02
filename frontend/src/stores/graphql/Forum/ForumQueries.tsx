@@ -49,6 +49,7 @@ export const QUERY_GET_INTERACTION_FORUM = gql`
       edges {
         cursor
         node {
+          
           id
           comment
           active
@@ -56,6 +57,9 @@ export const QUERY_GET_INTERACTION_FORUM = gql`
             name
             lastName
           }
+          forumId
+              
+            
         }
       }
       totalCount

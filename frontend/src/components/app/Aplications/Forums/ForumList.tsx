@@ -11,6 +11,7 @@ import { Colxx } from '../../../common/CustomBootstrap';
 import { createNotification } from '../../../../helpers/Notification';
 import IntlMessages from '../../../../helpers/IntlMessages';
 import classnames from 'classnames';
+import ForumModal from './ForumModal';
 
 const ForumListApp = (props: any) => {
   // Estados para la aplicación
@@ -40,6 +41,11 @@ const ForumListApp = (props: any) => {
   const schoolId = searchParams.get('schoolId');
   const courseId = searchParams.get('courseId');
   const courseName = searchParams.get('courseName');
+
+  // Toggle para abrir/cerrar modal - MOVIDO AQUÍ ARRIBA para evitar el error
+  const toggleViewModal = () => {
+    setViewModal(!viewModal);
+  };
 
   // Cargar datos iniciales
   useEffect(() => {
@@ -118,22 +124,63 @@ const ForumListApp = (props: any) => {
     }
   };
 
-  // Cargar interacciones del foro cuando se abre el modal
+  // Define una interfaz para las interacciones para mejor tipado
+  interface ForumInteractionEdge {
+    node?: {
+      id?: string;
+      comment?: string;
+      createdAt?: string;
+      forumQuestion?: any;
+      createdByUser?: {
+        name?: string;
+        lastName?: string;
+      };
+      // Otros campos que pueda tener
+    };
+  }
+
+  // Mejorar la función loadForumInteractions con más logs
   const loadForumInteractions = async (forumId: string) => {
+    console.log('📊 INICIO loadForumInteractions - forumId:', forumId);
     setLoadingInteractions(true);
+    
     try {
+      console.log('📊 Ejecutando dataForumInteraction para forumId:', forumId);
+      
+      // Añadir este log antes de la llamada a la API
+      console.log('📊 Enviando consulta GraphQL getAllForumInteraction con variables:', { forumId });
+      
       const interactionsData = await props.dataForumInteraction(forumId);
       
+      // Log detallado de la respuesta
+      console.log('📊 Respuesta completa de dataForumInteraction:', interactionsData);
+      
       if (interactionsData && interactionsData.getForumInteractions) {
-        setForumInteractions(interactionsData.getForumInteractions.edges || []);
+        const interactionsArray = interactionsData.getForumInteractions.edges || [];
+        console.log('📊 Número total de interacciones recibidas:', interactionsArray.length);
+        
+        // Clasificar las interacciones para depuración
+        const comments = interactionsArray.filter((edge: any) => !edge.node?.forumQuestion);
+        const answers = interactionsArray.filter((edge: any) => edge.node?.forumQuestion);
+        
+        console.log('📊 Desglose de interacciones:', {
+          totalInteractions: interactionsArray.length,
+          commentarios: comments.length,
+          respuestasAPreguntas: answers.length
+        });
+        
+        // Actualizar el estado con las interacciones
+        setForumInteractions(interactionsArray);
       } else {
+        console.log('⚠️ No se encontraron interacciones o formato incorrecto:', interactionsData);
         setForumInteractions([]);
       }
     } catch (error) {
-      console.error("Error al cargar interacciones:", error);
+      console.error("❌ ERROR al cargar interacciones:", error);
       setForumInteractions([]);
     } finally {
       setLoadingInteractions(false);
+      console.log('📊 FIN loadForumInteractions');
     }
   };
 
@@ -223,86 +270,93 @@ const ForumListApp = (props: any) => {
     }
   };
 
-  // Ver detalles del foro - Versión corregida
+  // Asegurarte de que esta función esté actualizada para el ForumModal
   const handleViewForum = async (forum: any) => {
     try {
-      // Primero abrimos el modal y luego cargamos los datos
-      setCurrentForum(forum.node); // Usamos los datos básicos del foro primero
-      setViewModal(true);
+      console.log('🔍 Abriendo modal de foro:', forum.node.id);
+      setCurrentForum(forum.node);
+      setViewModal(true); // Primero abrimos el modal
       setLoadingForum(true);
       setErrorMessage('');
       
-      // Obtener datos completos del foro
+      console.log('🔍 Cargando datos completos del foro...');
       const forumData = await props.dataForum(forum.node.id);
       
       if (forumData && forumData.getForum) {
-        console.log("Datos del foro cargados:", forumData.getForum);
+        console.log('🔍 Datos completos del foro obtenidos:', forumData.getForum);
         setCurrentForum(forumData.getForum);
         
-        // Cargar interacciones (comentarios) del foro
+        // Cargar interacciones del foro
+        console.log('🔍 Iniciando carga de interacciones para forumId:', forum.node.id);
         loadForumInteractions(forum.node.id);
       } else {
+        console.log('⚠️ Error: No se pudieron obtener datos completos del foro');
         setErrorMessage('No se pudieron cargar los detalles completos del foro.');
       }
     } catch (error) {
-      console.error("Error al cargar detalles del foro:", error);
+      console.error("❌ ERROR al cargar detalles del foro:", error);
       setErrorMessage('No se pudieron cargar los detalles del foro. Por favor intente nuevamente.');
     } finally {
       setLoadingForum(false);
     }
   };
 
-  // Cambiar pestaña en el modal
-  const toggleTab = (tab: string, e: React.MouseEvent) => {
-    e.preventDefault();
-    if (activeTab !== tab) setActiveTab(tab);
-  };
-
-  // Guardar un nuevo comentario - Corregido para evitar errores de objeto undefined
-  const handleSaveComment = async () => {
-    if (!newComment.trim() || !currentForum) return;
+  // Guardar un nuevo comentario o respuesta a pregunta
+  const handleSaveComment = async (comment: string, questionId?: string) => {
+    if (!comment.trim() || !currentForum) return;
     
     try {
       setLoadingInteractions(true);
       setErrorMessage('');
       
-      // Verificamos que el currentForum existe y tiene id antes de continuar
+      // Verificamos que el currentForum existe y tiene id
       if (!currentForum || !currentForum.id) {
         throw new Error("No se pudo identificar el foro actual");
       }
       
-      // Creamos el objeto de comentario correctamente
-      const commentData = {
-        comment: newComment,
+      const commentData: any = {
+        comment: comment,
         forumId: currentForum.id
       };
       
-      console.log("Guardando comentario:", commentData);
+      // Si es una respuesta a una pregunta, agregamos el ID de la pregunta
+      if (questionId) {
+        commentData.forumQuestionId = questionId;
+        console.log('📝 Enviando respuesta a pregunta:', commentData);
+      } else {
+        console.log('📝 Enviando comentario simple:', commentData);
+      }
       
-      await props.saveIntetactionForum(commentData);
+      console.log('📝 Ejecutando mutación GraphQL para guardar comentario/respuesta...');
       
-      // Limpiar el campo y recargar comentarios
-      setNewComment('');
+      const result = await props.saveIntetactionForum(commentData);
+      console.log('📝 Respuesta de guardar interacción:', result);
+      
+      // Recargar comentarios
+      console.log('🔄 Recargando interacciones después de guardar...');
       await loadForumInteractions(currentForum.id);
       
-      // Enfocar de nuevo el campo de texto
-      if (commentInputRef.current) {
-        commentInputRef.current.focus();
-      }
+      // Notificar éxito
+      createNotification('success', 'Éxito', 'Comentario guardado correctamente');
     } catch (error) {
-      console.error("Error al guardar comentario:", error);
-      setErrorMessage('No se pudo guardar el comentario. Por favor intente nuevamente.');
+      console.error("❌ ERROR al guardar comentario/respuesta:", error);
+      setErrorMessage('No se pudo guardar. Por favor intente nuevamente.');
+      createNotification('error', 'Error', 'No se pudo guardar el comentario');
     } finally {
       setLoadingInteractions(false);
     }
   };
 
-  // Manejar la pulsación de Enter para enviar el comentario
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSaveComment();
+  // Agregar una nueva pregunta
+  const handleAddQuestion = () => {
+    // Esta función ahora es manejada por el modal de preguntas
+    if (!currentForum) {
+      createNotification('warning', 'Advertencia', 'No se pudo identificar el foro actual');
+      return;
     }
+    
+    // Esta función se pasará al modal de preguntas para su procesamiento
+    console.log('📝 Preparando para agregar pregunta al foro:', currentForum.id);
   };
 
   return (
@@ -448,312 +502,27 @@ const ForumListApp = (props: any) => {
         </ModalFooter>
       </Modal>
 
-      {/* Modal para ver foro - Versión corregida que siempre se abre */}
-      <Modal isOpen={viewModal} toggle={() => setViewModal(!viewModal)} size="lg">
-        <ModalHeader toggle={() => setViewModal(!viewModal)} className="p-0 border-0">
-          <div className="w-100 p-4 text-white" style={{ 
-            background: 'linear-gradient(135deg, #2D81FF 0%, #6EB5FF 100%)'
-          }}>
-            <h3 className="mb-2 font-weight-bold">
-              {loadingForum ? 'Cargando...' : currentForum?.name || 'Detalles del foro'}
-            </h3>
-            <p className="mb-0 opacity-90">
-              {loadingForum ? '' : currentForum?.description || ''}
-            </p>
-          </div>
-        </ModalHeader>
-        
-        <Nav tabs className="p-0 border-0">
-          <NavItem>
-            <a
-              className={classnames({ active: activeTab === '1' }, 'nav-link border-0 font-weight-bold')}
-              onClick={(e) => toggleTab('1', e)}
-              href="#tab1"
-              role="button"
-            >
-              Detalles
-            </a>
-          </NavItem>
-          <NavItem>
-            <a
-              className={classnames({ active: activeTab === '2' }, 'nav-link border-0 font-weight-bold')}
-              onClick={(e) => toggleTab('2', e)}
-              href="#tab2"
-              role="button"
-            >
-              Comentarios
-            </a>
-          </NavItem>
-          <NavItem>
-            <a
-              className={classnames({ active: activeTab === '3' }, 'nav-link border-0 font-weight-bold')}
-              onClick={(e) => toggleTab('3', e)}
-              href="#tab3"
-              role="button"
-            >
-              Preguntas
-            </a>
-          </NavItem>
-          <NavItem>
-            <a
-              className={classnames({ active: activeTab === '4' }, 'nav-link border-0 font-weight-bold')}
-              onClick={(e) => toggleTab('4', e)}
-              href="#tab4"
-              role="button"
-            >
-              Respuestas
-            </a>
-          </NavItem>
-        </Nav>
-        
-        <ModalBody className="pt-3">
-          {loadingForum && (
-            <div className="text-center py-5">
-              <div className="spinner-border text-primary" role="status">
-                <span className="sr-only">Cargando...</span>
-              </div>
-              <p className="mt-3">Cargando información del foro...</p>
-            </div>
-          )}
-          
-          {errorMessage && (
-            <Alert color="danger">
-              <i className="simple-icon-exclamation mr-2"></i>
-              {errorMessage}
-            </Alert>
-          )}
-          
-          {!loadingForum && (
-            <TabContent activeTab={activeTab} className="pt-2">
-              {/* Tab de Detalles */}
-              <TabPane tabId="1">
-                <div className="info-section mb-4">
-                  <h5 className="section-title">Descripción</h5>
-                  <p className="section-content">{currentForum?.description || 'Sin descripción'}</p>
-                </div>
-                
-                <div className="info-section mb-4">
-                  <h5 className="section-title">Detalles</h5>
-                  <div className="p-3 bg-light rounded mb-4">
-                    {currentForum?.details ? (
-                      <div style={{ whiteSpace: 'pre-wrap' }}>
-                        {currentForum.details}
-                      </div>
-                    ) : (
-                      <p className="text-muted mb-0">No hay detalles disponibles</p>
-                    )}
-                  </div>
-                </div>
-                
-                <div className="info-section">
-                  <h5 className="section-title">Información adicional</h5>
-                  <div className="table-responsive">
-                    <table className="table table-bordered">
-                      <tbody>
-                        <tr>
-                          <th style={{width: '30%'}}>Estado</th>
-                          <td>
-                            {currentForum?.active ? (
-                              <span className="badge badge-success px-3 py-2">Activo</span>
-                            ) : (
-                              <span className="badge badge-danger px-3 py-2">Inactivo</span>
-                            )}
-                          </td>
-                        </tr>
-                        <tr>
-                          <th>Fecha de creación</th>
-                          <td>{currentForum?.createdAt ? formatDate(currentForum.createdAt) : '-'}</td>
-                        </tr>
-                        <tr>
-                          <th>Última actualización</th>
-                          <td>{currentForum?.updatedAt ? formatDate(currentForum.updatedAt) : '-'}</td>
-                        </tr>
-                        <tr>
-                          <th>ID del foro</th>
-                          <td><code>{currentForum?.id || '-'}</code></td>
-                        </tr>
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              </TabPane>
-              
-              {/* Tab de Comentarios */}
-              <TabPane tabId="2">
-                <div className="comments-container d-flex flex-column" style={{ minHeight: "400px" }}>
-                  {/* Área de mensajes con scroll */}
-                  <div 
-                    className="flex-grow-1 mb-3 overflow-auto" 
-                    style={{ maxHeight: "350px" }}
-                  >
-                    {loadingInteractions ? (
-                      <div className="text-center py-5">
-                        <div className="spinner-border text-primary mb-3" role="status">
-                          <span className="sr-only">Cargando...</span>
-                        </div>
-                        <p>Cargando comentarios...</p>
-                      </div>
-                    ) : forumInteractions && forumInteractions.length > 0 ? (
-                      forumInteractions.map((interaction: any, index: number) => (
-                        <Card key={interaction.node?.id || index} className="mb-3">
-                          <CardBody className="py-3">
-                            <div className="d-flex">
-                              <div className="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center mr-3" style={{width: 40, height: 40}}>
-                                {interaction.node?.user?.firstName?.[0] || 'U'}{interaction.node?.user?.lastName?.[0] || ''}
-                              </div>
-                              <div className="flex-grow-1">
-                                <div className="d-flex justify-content-between align-items-center mb-2">
-                                  <h6 className="mb-0 font-weight-bold">
-                                    {interaction.node?.user ? 
-                                      `${interaction.node.user.firstName || ''} ${interaction.node.user.lastName || ''}`.trim() 
-                                      : 'Usuario'
-                                    }
-                                  </h6>
-                                  <small className="text-muted">
-                                    {interaction.node?.createdAt ? formatDate(interaction.node.createdAt) : '-'}
-                                  </small>
-                                </div>
-                                <p className="mb-0" style={{ whiteSpace: 'pre-wrap' }}>
-                                  {interaction.node?.comment || 'Sin contenido'}
-                                </p>
-                              </div>
-                            </div>
-                          </CardBody>
-                        </Card>
-                      ))
-                    ) : (
-                      <div className="text-center py-5">
-                        <i className="simple-icon-bubble mb-3" style={{ fontSize: '2rem', opacity: 0.4 }}></i>
-                        <p>No hay comentarios en este foro</p>
-                        <p className="text-muted">Sé el primero en comentar</p>
-                      </div>
-                    )}
-                  </div>
-                  
-                  {/* Área de entrada de texto */}
-                  <div className="mt-auto border-top pt-3">
-                    <InputGroup>
-                      <Input
-                        type="text"
-                        placeholder="Escribe un comentario..."
-                        value={newComment}
-                        onChange={(e) => setNewComment(e.target.value)}
-                        onKeyPress={handleKeyPress}
-                        innerRef={commentInputRef}
-                        disabled={loadingInteractions}
-                      />
-                      <Button 
-                        color="primary" 
-                        onClick={handleSaveComment}
-                        disabled={loadingInteractions || !newComment.trim()}
-                      >
-                        {loadingInteractions ? (
-                          <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                        ) : (
-                          <i className="simple-icon-paper-plane"></i>
-                        )}
-                      </Button>
-                    </InputGroup>
-                    <small className="text-muted">Presiona Enter para enviar</small>
-                  </div>
-                </div>
-              </TabPane>
-              
-              {/* Tab de Preguntas */}
-              <TabPane tabId="3">
-                <div className="mb-4 d-flex flex-column">
-                  <div className="d-flex justify-content-between align-items-center mb-4">
-                    <h5 className="mb-0">Preguntas del foro</h5>
-                    <Button 
-                      color="outline-primary" 
-                      size="sm"
-                      onClick={() => {
-                        createNotification('info', 'Información', 'Funcionalidad en desarrollo');
-                      }}
-                    >
-                      <i className="simple-icon-plus mr-2"></i>
-                      Nueva Pregunta
-                    </Button>
-                  </div>
-                  
-                  <div className="text-center py-5">
-                    <i className="iconsminds-mail-question mb-3" style={{ fontSize: '3rem', opacity: 0.4 }}></i>
-                    <h4>Preguntas del foro</h4>
-                    <p className="text-muted">No hay preguntas disponibles para este foro</p>
-                  </div>
-                </div>
-              </TabPane>
-              
-              {/* Tab de Respuestas */}
-              <TabPane tabId="4">
-                <div className="mb-4">
-                  <h5 className="mb-4">Respuestas a preguntas</h5>
-                  
-                  <div className="text-center py-5">
-                    <i className="iconsminds-speach-bubble-dialog mb-3" style={{ fontSize: '3rem', opacity: 0.4 }}></i>
-                    <h4>Respuestas del foro</h4>
-                    <p className="text-muted">No hay respuestas disponibles para este foro</p>
-                  </div>
-                </div>
-              </TabPane>
-            </TabContent>
-          )}
-        </ModalBody>
-        <ModalFooter>
-          <Button color="secondary" onClick={() => setViewModal(false)}>
-            Cerrar
-          </Button>
-        </ModalFooter>
-      </Modal>
-
-      <style>
-        {`
-        .section-title {
-          font-weight: 600;
-          color: #3a3a3a;
-          margin-bottom: 10px;
-          padding-bottom: 5px;
-          border-bottom: 2px solid #f0f0f0;
-        }
-        
-        .info-section {
-          margin-bottom: 25px;
-        }
-        
-        .badge {
-          font-size: 90%;
-          padding: 0.4em 0.8em;
-        }
-        
-        .nav-tabs .nav-link.active {
-          font-weight: bold;
-          color: #2D81FF;
-          border-bottom: 3px solid #2D81FF !important;
-          background: transparent;
-        }
-        
-        .nav-tabs .nav-link {
-          border: none;
-          padding: 1rem 1.5rem;
-          color: #6c757d;
-        }
-
-        .table th {
-          background-color: #f8f9fa;
-        }
-
-        /* Estilo para los comentarios */
-        .comments-container .card {
-          transition: all 0.2s ease;
-          border-left: 3px solid transparent;
-        }
-
-        .comments-container .card:hover {
-          border-left: 3px solid #2D81FF;
-          box-shadow: 0 3px 10px rgba(0,0,0,0.1);
-        }
-        `}
-      </style>
+      {/* ForumModal para ver y comentar en foros */}
+      <ForumModal
+        isOpen={viewModal}
+        toggle={toggleViewModal}
+        forum={currentForum}
+        forumInteractions={forumInteractions}
+        loadingForum={loadingForum}
+        loadingInteractions={loadingInteractions}
+        errorMessage={errorMessage}
+        formatDate={formatDate}
+        onSaveComment={handleSaveComment}
+        onAddQuestion={handleAddQuestion}
+        reloadInteractions={() => {
+          if (currentForum && currentForum.id) {
+            console.log('🔄 Recargando interacciones desde ForumModal - forumId:', currentForum.id);
+            loadForumInteractions(currentForum.id);
+          } else {
+            console.log('⚠️ No se puede recargar: currentForum o currentForum.id es null/undefined');
+          }
+        }}
+      />
     </>
   );
 };

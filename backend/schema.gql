@@ -1613,6 +1613,7 @@ type ForumInteraction implements IModelCampusData {
   createdByUser: User
   createdByUserId: String
   forumQuestion: ForumQuestion
+  forumId: String
   forumQuestionId: String
   id: ID!
   school: School

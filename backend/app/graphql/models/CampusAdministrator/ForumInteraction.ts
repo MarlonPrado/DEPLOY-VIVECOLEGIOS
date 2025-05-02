@@ -14,6 +14,10 @@ export class ForumInteraction extends IModelCampusData {
   @Column({ nullable: true })
   comment?: string;
 
+  @Field({ nullable: true })
+  @Column({ nullable: true })
+  forumId?: string;
+
   @Index("index_forumQuestionId")
   @Field(() => String, { nullable: true })
   @Column({ nullable: true })

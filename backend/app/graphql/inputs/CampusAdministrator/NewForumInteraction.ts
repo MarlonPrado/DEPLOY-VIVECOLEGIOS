@@ -11,6 +11,9 @@ export class NewForumInteraction implements Partial<ForumInteraction> {
   forumQuestionId?: string;
 
   @Field(() => String, { nullable: true })
+  forumId?: string;
+
+  @Field(() => String, { nullable: true })
   schoolId?: string;
 
   @Field({ nullable: true })
