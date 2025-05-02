@@ -11,6 +11,11 @@ export const QUERY_GET_ALL_FORUM = gql`
           details
           description
           active
+          createdAt
+          updatedAt
+          academicAsignatureCourseId
+          schoolYearId
+          createdByUserId
         }
       }
       totalCount

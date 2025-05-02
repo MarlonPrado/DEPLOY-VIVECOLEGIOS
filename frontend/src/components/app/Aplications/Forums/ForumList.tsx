@@ -1,10 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { connect } from 'react-redux';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { 
   Button, Card, CardBody, Row, Modal, ModalHeader, 
   ModalBody, ModalFooter, FormGroup, Label, Input, Nav, 
-  NavItem, TabContent, TabPane 
+  NavItem, TabContent, TabPane, InputGroup
 } from 'reactstrap';
 import * as forumActions from '../../../../stores/actions/ForumAction';
 import { Colxx } from '../../../common/CustomBootstrap';
@@ -13,7 +13,7 @@ import IntlMessages from '../../../../helpers/IntlMessages';
 import classnames from 'classnames';
 
 const ForumListApp = (props: any) => {
-  // Estados para la aplicación
+  // Estados existentes
   const [items, setItems] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchParams] = useSearchParams();
@@ -24,8 +24,16 @@ const ForumListApp = (props: any) => {
     description: '',
     details: ''
   });
-  const [currentForum, setCurrentForum] = useState(null);
+  const [currentForum, setCurrentForum] = useState<any>(null);
   const [activeTab, setActiveTab] = useState('1');
+  
+  // Nuevos estados para comentarios e interacciones
+  const [forumInteractions, setForumInteractions] = useState([]);
+  const [forumQuestions, setForumQuestions] = useState([]);
+  const [forumAnswers, setForumAnswers] = useState([]);
+  const [newComment, setNewComment] = useState('');
+  const [loadingInteractions, setLoadingInteractions] = useState(false);
+  const commentInputRef = useRef<HTMLInputElement>(null);
   
   // Navegación y parámetros
   const navigate = useNavigate();
@@ -45,7 +53,37 @@ const ForumListApp = (props: any) => {
     }
   }, []);
 
-  // Función para cargar foros
+  // Función para formatear fechas de manera amigable
+  const formatDate = (dateString: string) => {
+    if (!dateString) return '-';
+    
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffTime = Math.abs(now.getTime() - date.getTime());
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays === 0) {
+      // Hoy - Mostrar hora
+      return `Hoy a las ${date.toLocaleTimeString('es-ES', {hour: '2-digit', minute:'2-digit'})}`;
+    } else if (diffDays === 1) {
+      // Ayer
+      return `Ayer a las ${date.toLocaleTimeString('es-ES', {hour: '2-digit', minute:'2-digit'})}`;
+    } else if (diffDays < 7) {
+      // Esta semana
+      return `Hace ${diffDays} días`;
+    } else {
+      // Más de una semana
+      return date.toLocaleDateString('es-ES', {
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    }
+  };
+
+  // Función para cargar foros con filtrado correcto y depuración mejorada
   const loadForums = async (defaultSchoolId: string | null = null) => {
     setIsLoading(true);
     try {
@@ -55,18 +93,68 @@ const ForumListApp = (props: any) => {
         throw new Error("ID de institución no encontrado");
       }
       
-      // Cargar todos los foros sin filtrar por courseId inicialmente
+      // Cargar todos los foros
       const result = await props.getListAllForum(schoolIdToUse);
-      console.log("Foros cargados:", result);
       
-      // Por ahora, mostrar todos los foros sin filtro
-      setItems(result || []);
+      // DEPURACIÓN AVANZADA
+      console.log("Estructura completa del primer foro:", 
+        result && result.length > 0 ? JSON.stringify(result[0], null, 2) : "No hay foros");
+      
+      // Extraer todos los campos para ver qué tenemos disponible
+      if (result && result.length > 0) {
+        console.log("Campos disponibles en node:", Object.keys(result[0].node));
+        
+        // Intentar acceder directamente al campo que necesitamos
+        const hasAcademicId = "academicAsignatureCourseId" in result[0].node;
+        console.log("¿Tiene academicAsignatureCourseId?", hasAcademicId);
+        
+        // Ver si está con otro nombre o dentro de otro objeto
+        Object.keys(result[0].node).forEach(key => {
+          const value = result[0].node[key];
+          if (typeof value === 'object' && value !== null) {
+            console.log(`Contenido del campo ${key}:`, value);
+          }
+        });
+      }
+      
+      let filteredForums = result || [];
+      
+      // SOLUCIÓN DEFINITIVA - usar el resultado de la depuración para modificar esto
+      if (courseId && filteredForums.length > 0) {
+        console.log("Intentando filtrar por courseId:", courseId);
+        
+        // Primera opción: filtrar usando curso directamente desde el JSON
+        filteredForums = filteredForums.filter((forum: any) => {
+          const forumString = JSON.stringify(forum);
+          return forumString.includes(courseId);
+        });
+        
+        console.log("Foros filtrados encontrados:", filteredForums.length);
+      }
+      
+      setItems(filteredForums);
     } catch (error) {
       console.error("Error al cargar foros:", error);
       createNotification('error', 'Error', 'No se pudieron cargar los foros');
       setItems([]);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  // Cargar interacciones del foro cuando se abre el modal
+  const loadForumInteractions = async (forumId: string) => {
+    setLoadingInteractions(true);
+    try {
+      const interactionsData = await props.dataForumInteraction(forumId);
+      
+      if (interactionsData && interactionsData.getForumInteractions) {
+        setForumInteractions(interactionsData.getForumInteractions.edges || []);
+      }
+    } catch (error) {
+      console.error("Error al cargar interacciones:", error);
+    } finally {
+      setLoadingInteractions(false);
     }
   };
 
@@ -89,17 +177,15 @@ const ForumListApp = (props: any) => {
     try {
       setIsLoading(true);
       
-      // Corregido: Crear el objeto dataToSave con los campos correctos según el esquema
       const dataToSave: any = {
         name: formData.name,
         description: formData.description,
         details: formData.details,
         schoolId: schoolId || props.loginReducer.schoolId,
-        academicAsignatureCourseId: courseId || null,  // Cambiado de courseId a academicAsignatureCourseId
+        academicAsignatureCourseId: courseId || null,
         schoolYearId: props.loginReducer.schoolYear
       };
 
-      // Agregar campusId solo si existe
       if (props.loginReducer.campusId) {
         dataToSave.campusId = props.loginReducer.campusId;
       }
@@ -146,7 +232,6 @@ const ForumListApp = (props: any) => {
     if (window.confirm('¿Está seguro que desea eliminar este foro?')) {
       try {
         setIsLoading(true);
-        // Corregir el llamado a deleteForum para incluir showToast
         await props.deleteForum(forum.node.id, true);
         createNotification('success', 'Éxito', 'Foro eliminado correctamente');
         loadForums(schoolId || props.loginReducer.schoolId);
@@ -166,6 +251,9 @@ const ForumListApp = (props: any) => {
       const forumData = await props.dataForum(forum.node.id);
       setCurrentForum(forumData.getForum);
       setViewModal(true);
+      
+      // Cargar interacciones (comentarios) del foro
+      loadForumInteractions(forum.node.id);
     } catch (error) {
       console.error("Error al cargar detalles del foro:", error);
       createNotification('error', 'Error', 'No se pudieron cargar los detalles');
@@ -177,6 +265,45 @@ const ForumListApp = (props: any) => {
     // Prevenir la acción predeterminada del navegador (redirección)
     e.preventDefault();
     if (activeTab !== tab) setActiveTab(tab);
+  };
+
+  // Guardar un nuevo comentario
+  const handleSaveComment = async () => {
+    if (!newComment.trim()) return;
+    
+    try {
+      setLoadingInteractions(true);
+      
+      const commentData = {
+        comment: newComment,
+        forumId: currentForum.id,
+        userId: props.loginReducer.userId
+      };
+      
+      await props.saveIntetactionForum(commentData);
+      
+      // Limpiar el campo y recargar comentarios
+      setNewComment('');
+      await loadForumInteractions(currentForum.id);
+      
+      // Enfocar de nuevo el campo de texto
+      if (commentInputRef.current) {
+        commentInputRef.current.focus();
+      }
+    } catch (error) {
+      console.error("Error al guardar comentario:", error);
+      createNotification('error', 'Error', 'No se pudo guardar el comentario');
+    } finally {
+      setLoadingInteractions(false);
+    }
+  };
+
+  // Manejar la pulsación de Enter para enviar el comentario
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSaveComment();
+    }
   };
 
   return (
@@ -211,7 +338,7 @@ const ForumListApp = (props: any) => {
                       <h5 className="mb-1">{item.node.name}</h5>
                       <p className="text-muted mb-2">{item.node.description}</p>
                       <small className="text-muted">
-                        Creado: {new Date(item.node.createdAt).toLocaleString()}
+                        Creado: {formatDate(item.node.createdAt)}
                       </small>
                       {!item.node.active && (
                         <span className="badge badge-danger ml-2">Inactivo</span>
@@ -318,13 +445,29 @@ const ForumListApp = (props: any) => {
         </ModalFooter>
       </Modal>
 
-      {/* Modal para ver foro - Corregido el comportamiento de las pestañas */}
+      {/* Modal para ver foro - Mejorado visualmente */}
       <Modal isOpen={viewModal} toggle={() => setViewModal(!viewModal)} size="lg">
-        <ModalHeader toggle={() => setViewModal(!viewModal)}>
-          {currentForum?.name}
+        <ModalHeader 
+          toggle={() => setViewModal(!viewModal)} 
+          className="border-0 pb-0"
+        >
+          <div className="w-100">
+            {/* Título con borde inferior gradiente */}
+            <h3 className="mb-2" style={{
+              display: "inline-block",
+              paddingBottom: "8px",
+              borderBottom: "3px solid",
+              borderImage: "linear-gradient(to right, #2D81FF 0%, #6EB5FF 100%)",
+              borderImageSlice: 1
+            }}>
+              {currentForum?.name}
+            </h3>
+            {/* Descripción */}
+            <p className="text-muted mb-0">{currentForum?.description}</p>
+          </div>
         </ModalHeader>
-        <ModalBody>
-          <Nav tabs>
+        <ModalBody className="pt-0">
+          <Nav tabs className="mt-3">
             <NavItem>
               <a
                 className={classnames({ active: activeTab === '1' }, 'nav-link')}
@@ -367,6 +510,7 @@ const ForumListApp = (props: any) => {
             </NavItem>
           </Nav>
           <TabContent activeTab={activeTab} className="pt-3">
+            {/* Tab de Detalles */}
             <TabPane tabId="1">
               <h5>Descripción</h5>
               <p>{currentForum?.description}</p>
@@ -381,47 +525,121 @@ const ForumListApp = (props: any) => {
                       <td>{currentForum?.active ? 'Activo' : 'Inactivo'}</td>
                     </tr>
                     <tr>
+                      <th>ID del Foro</th>
+                      <td>{currentForum?.id || '-'}</td>
+                    </tr>
+                    <tr>
+                      <th>Curso asociado</th>
+                      <td>{currentForum?.academicAsignatureCourseId || '-'}</td>
+                    </tr>
+                    <tr>
                       <th>Fecha de creación</th>
-                      <td>{currentForum?.createdAt ? new Date(currentForum.createdAt).toLocaleString() : '-'}</td>
+                      <td>{currentForum?.createdAt ? formatDate(currentForum.createdAt) : '-'}</td>
+                    </tr>
+                    <tr>
+                      <th>Última actualización</th>
+                      <td>{currentForum?.updatedAt ? formatDate(currentForum.updatedAt) : '-'}</td>
+                    </tr>
+                    <tr>
+                      <th>Creado por</th>
+                      <td>{currentForum?.createdByUserId || '-'}</td>
                     </tr>
                   </tbody>
                 </table>
               </div>
             </TabPane>
+            
+            {/* Tab de Comentarios */}
             <TabPane tabId="2">
-              <div className="mb-4">
-                <h5>Comentarios</h5>
-                {/* Datos quemados para comentarios */}
-                <Card className="mb-3">
-                  <CardBody>
-                    <div className="d-flex">
-                      <div className="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center mr-3" style={{width: 40, height: 40}}>JP</div>
-                      <div>
-                        <h6 className="mb-1">Juan Pérez</h6>
-                        <p className="mb-2">Excelente foro, me ha servido mucho para comprender mejor los conceptos.</p>
-                        <small className="text-muted">Hace 2 días</small>
-                      </div>
+              <div className="d-flex flex-column" style={{ height: "400px" }}>
+                {/* Área de mensajes con scroll */}
+                <div 
+                  className="flex-grow-1 mb-3 overflow-auto" 
+                  style={{ maxHeight: "300px" }}
+                >
+                  {loadingInteractions ? (
+                    <div className="text-center my-5">
+                      <div className="loading"></div>
                     </div>
-                  </CardBody>
-                </Card>
-                <Card className="mb-3">
-                  <CardBody>
-                    <div className="d-flex">
-                      <div className="rounded-circle bg-info text-white d-flex align-items-center justify-content-center mr-3" style={{width: 40, height: 40}}>MR</div>
-                      <div>
-                        <h6 className="mb-1">María Rodríguez</h6>
-                        <p className="mb-2">Tengo una duda sobre el tema planteado. ¿Podríamos profundizar en la segunda parte?</p>
-                        <small className="text-muted">Hace 1 día</small>
-                      </div>
+                  ) : forumInteractions.length > 0 ? (
+                    forumInteractions.map((interaction: any, index: number) => (
+                      <Card key={interaction.node.id} className="mb-3">
+                        <CardBody className="py-2">
+                          <div className="d-flex">
+                            <div className="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center mr-3" style={{width: 40, height: 40}}>
+                              {interaction.node.user?.firstName?.[0] || ''}{interaction.node.user?.lastName?.[0] || ''}
+                            </div>
+                            <div className="flex-grow-1">
+                              <div className="d-flex justify-content-between align-items-center mb-1">
+                                <h6 className="mb-0 font-weight-bold">
+                                  {interaction.node.user?.firstName} {interaction.node.user?.lastName}
+                                </h6>
+                                <small className="text-muted">{formatDate(interaction.node.createdAt)}</small>
+                              </div>
+                              <p className="mb-0" style={{ whiteSpace: 'pre-wrap' }}>
+                                {interaction.node.comment}
+                              </p>
+                            </div>
+                          </div>
+                        </CardBody>
+                      </Card>
+                    ))
+                  ) : (
+                    <div className="text-center py-5">
+                      <i className="simple-icon-bubble mb-3" style={{ fontSize: '2rem', opacity: 0.4 }}></i>
+                      <p>No hay comentarios en este foro</p>
                     </div>
-                  </CardBody>
-                </Card>
+                  )}
+                </div>
+                
+                {/* Área de entrada de texto */}
+                <div className="mt-auto">
+                  <InputGroup>
+                    <Input
+                      type="text"
+                      placeholder="Escribe un comentario..."
+                      value={newComment}
+                      onChange={(e) => setNewComment(e.target.value)}
+                      onKeyPress={handleKeyPress}
+                      innerRef={commentInputRef}
+                      disabled={loadingInteractions}
+                    />
+                    <Button 
+                      color="primary" 
+                      onClick={handleSaveComment}
+                      disabled={loadingInteractions || !newComment.trim()}
+                    >
+                      {loadingInteractions ? (
+                        <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                      ) : (
+                        <i className="simple-icon-paper-plane"></i>
+                      )}
+                    </Button>
+                  </InputGroup>
+                  <small className="text-muted">Presiona Enter para enviar</small>
+                </div>
               </div>
             </TabPane>
+            
+            {/* Tab de Preguntas */}
             <TabPane tabId="3">
-              <div className="mb-4">
+              <div className="mb-4 d-flex flex-column">
                 <h5>Preguntas del foro</h5>
-                {/* Datos quemados para preguntas */}
+                
+                {/* Botón para agregar nueva pregunta (solo para docentes) */}
+                <Button 
+                  color="outline-primary" 
+                  className="mb-4 align-self-end"
+                  onClick={() => {
+                    // Implementar lógica para agregar pregunta
+                    createNotification('info', 'Información', 'Funcionalidad en desarrollo');
+                  }}
+                >
+                  <i className="simple-icon-plus mr-2"></i>
+                  Nueva Pregunta
+                </Button>
+                
+                {/* Lista de preguntas */}
                 <Card className="mb-3">
                   <CardBody>
                     <h6 className="font-weight-bold">¿Cómo aplicaría el teorema en un caso práctico?</h6>
@@ -436,10 +654,11 @@ const ForumListApp = (props: any) => {
                 </Card>
               </div>
             </TabPane>
+            
+            {/* Tab de Respuestas */}
             <TabPane tabId="4">
               <div className="mb-4">
                 <h5>Respuestas a preguntas</h5>
-                {/* Datos quemados para respuestas */}
                 <Card className="mb-3">
                   <CardBody>
                     <h6 className="font-weight-bold">Re: ¿Cómo aplicaría el teorema en un caso práctico?</h6>
