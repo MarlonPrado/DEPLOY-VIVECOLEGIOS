@@ -155,7 +155,12 @@ const ForumListApp = (props: any) => {
       // Log detallado de la respuesta
       console.log('📊 Respuesta completa de dataForumInteraction:', interactionsData);
       
+      console.log('📊 Respuesta de interacciones2:', interactionsData.getForumInteractions);
       if (interactionsData && interactionsData.getForumInteractions) {
+
+       
+
+        console.log('📊 Datos de interacciones obtenidos:', interactionsData.getForumInteractions);
         const interactionsArray = interactionsData.getForumInteractions.edges || [];
         console.log('📊 Número total de interacciones recibidas:', interactionsArray.length);
         
