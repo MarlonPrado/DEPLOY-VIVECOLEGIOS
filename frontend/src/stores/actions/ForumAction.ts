@@ -2,7 +2,7 @@ import { createNotification } from "../../helpers/Notification";
 import { client } from '../graphql';
 import { MUTATION_CHANGE_ACTIVE_FORUM, MUTATION_CREATE_FORUM, MUTATION_CREATE_INTERACTION_FORUM, MUTATION_DELETE_FORUM, MUTATION_UPDATE_FORUM } from '../graphql/Forum/ForumMutations';
 import { QUERY_GET_ALL_FORUM, QUERY_GET_FORUM, QUERY_GET_INTERACTION_FORUM } from '../graphql/Forum/ForumQueries';
-
+// import { QUERY_GET_FORUMS_BY_COURSE } from '../graphql/Forum/ForumQueries'; // Comentada para implementación futura
 
 export const getListAllForum = (schoolId:string) => {
   return async (dispatch: any) => {
@@ -209,7 +209,6 @@ export const changeActiveForum = (active: any, id: any, showToast: boolean) => {
   };
 };
 
-
 export const deleteForum = (id: any, showToast: boolean) => {
   return async (dispatch: any) => {
     try {
@@ -242,3 +241,29 @@ export const deleteForum = (id: any, showToast: boolean) => {
     }
   };
 };
+
+// Función comentada para implementación futura
+/*
+export const getForumsByCourse = (courseId: string, schoolId: string) => {
+  return async (dispatch: any) => {
+    try {
+      let listData = {};
+      await client
+        .query({
+          query: QUERY_GET_FORUMS_BY_COURSE,
+          variables: {
+            courseId,
+            schoolId,
+          },
+        })
+        .then((result: any) => {          
+          listData = result.data.data.edges;
+        });
+      return listData;
+    } catch (error) {
+      createNotification('error', 'error', '');
+      return error;
+    }
+  };
+};
+*/

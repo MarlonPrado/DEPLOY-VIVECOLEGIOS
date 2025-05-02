@@ -14,84 +14,63 @@ const CoursesTeacherList = (props: any) => {
   const [modalOpen, setModalOpen] = useState(false);
 
   let navigate = useNavigate();
-  console.log('getDataTable', props?.loginReducer?.teacherId, props?.loginReducer?.schoolYear);
-
-  const [data, setData] = useState(null);
+  
+  // Cargar datos iniciales
   useEffect(() => {
-    props.getListAllCourseTeacher(props?.loginReducer?.teacherId, props?.loginReducer?.schoolYear).then((listData: any) => {
-      setDataTable(listData.map((c: any) => {
-        c.node.grade_format = c.node.academicGrade ? c?.node?.academicGrade?.name : '';
-        c.node.academicDay_format = c.node.academicDay ? c.node.academicDay.name : '';
-        c.node.campus_format = c.node.campus ? c.node.campus.name : '';
-        return c;
-      }));
-    });
+    getDataTable();
   }, []);
 
+  // Refrescar datos
   const refreshDataTable = async () => {
     setDataTable(null);
     await getDataTable();
   };
 
+  // Obtener cursos del docente
   const getDataTable = async () => {
-    
-    props.getListAllCourseTeacher(props?.loginReducer?.teacherId, props?.loginReducer?.schoolYear).then((listData: any) => {
-      setDataTable(listData.map((c: any) => {
-        c.node.grade_format = c.node.academicGrade ? c?.node?.academicGrade?.name : '';
-        c.node.academicDay_format = c.node.academicDay ? c.node.academicDay.name : '';
-        c.node.campus_format = c.node.campus ? c.node.campus.name : '';
-        return c;
-      }));
-    });
+    try {
+      const listData = await props.getListAllCourseTeacher(
+        props?.loginReducer?.teacherId, 
+        props?.loginReducer?.schoolYear
+      );
+      
+      // Verificar si tenemos datos en array
+      if (Array.isArray(listData)) {
+        setDataTable(listData.map((c: any) => {
+          c.node.grade_format = c.node.academicGrade ? c.node.academicGrade.name : '';
+          c.node.academicDay_format = c.node.academicDay ? c.node.academicDay.name : '';
+          c.node.campus_format = c.node.campus ? c.node.campus.name : '';
+          return c;
+        }));
+      } else {
+        console.error("Respuesta no es un array:", listData);
+        setDataTable([]);
+      }
+    } catch (error) {
+      console.error("Error al cargar cursos:", error);
+      setDataTable([]);
+    }
   };
 
+  // Función para manejar navegación
   const additionalFunction = async (item: any, btn: any) => {
-
     switch (btn?.action) {
-      case 'goToChildrenStudents':
-        goToChildren(`/studentCourse?courseId=${item.id}&courseName=${item.name}&gradeName=${item?.academicGrade?.name}&gradeId=${item?.academicGrade?.id}`);
-        break;
-      case 'goToChildrenCodes':
-        generateCodesStudents(item?.id);
-        break;
-      case 'goToChildrenAsignatureCourse':
-        goToChildren(`/academicAsignatureCourseBasic?courseId=${item.id}&courseName=${item.name}`);
-        break;
-      case 'goToChildrenSpredsheetCourse':
-        goToChildren(
-          `/spreadsheetCourse?courseId=${item.id}`,
-        );
-        break;
-      case 'goToChildrenStudentBehaviour':
-        goToChildren(
-          `/studentBehaviour?courseId=${item.id}`,
-        );
-        break;
-      case 'goToChildrenPerformanceReportStudentsCourse':
-        goToChildren(
-          `/performanceReportStudentsCourse?courseId=${item.id}&courseName=${item.name}&gradeName=${item?.academicGrade?.name}&gradeId=${item?.academicGrade?.id}`,
-        );
-        break;
-      case 'goToChildrenStudents2':
-        goToChildren(`/performanceReportStudentsCourse2?courseId=${item.id}&courseName=${item.name}&gradeName=${item?.academicGrade?.name}&gradeId=${item?.academicGrade?.id}`);
+      case 'goToForums':
+        // Navegar a la ruta correcta con los parámetros necesarios
+        goToChildren(`/foros?schoolId=${props?.loginReducer?.schoolId}&courseId=${item.id}&courseName=${item.name}`);
         break;
       default:
         break;
     }
   };
 
-  const generateCodesStudents = async (id: any) => {
-    props.generateCodesStudentsCourse(id).then((listData: any) => {
-    });
-  };
-
+  // Función de navegación
   const goToChildren = async (url: any) => {
     navigate(url);
   };
 
   return (
     <>
-      {' '}
       {dataTable !== null ? (
         <>
           <DataList
@@ -103,54 +82,12 @@ const CoursesTeacherList = (props: any) => {
             additionalFunction={additionalFunction}
             childrenButtons={[
               {
-                id: 0,
-                label: 'Generar códigos',
-                color: 'warning',
-                icon: 'iconsminds-tag',
-                action: 'goToChildrenCodes',
-              },
-              {
                 id: 1,
-                label: 'Estudiantes',
-                color: 'info',
-                icon: 'iconsminds-student-male-female',
-                action: 'goToChildrenStudents',
-              },
-              {
-                id: 2,
-                label: 'Asignaturas',
+                label: 'Mis foros',
                 color: 'primary',
-                icon: 'iconsminds-blackboard',
-                action: 'goToChildrenAsignatureCourse',
-              },
-              {
-                id: 4,
-                label: 'Planilla General',
-                color: 'warning',
-                icon: 'iconsminds-library',
-                action: 'goToChildrenSpredsheetCourse',
-              },
-              {
-                id: 5,
-                label: 'Comportamiento Escolar',
-                color: 'info',
-                icon: 'iconsminds-library',
-                action: 'goToChildrenStudentBehaviour',
-              },
-              {
-                id: 6,
-                label: 'Certificado Desempeño',
-                color: 'primary',
-                icon: 'iconsminds-library',
-                action: 'goToChildrenPerformanceReportStudentsCourse',
-              },
-              {
-                id: 7,
-                label: 'Desempeño Final',
-                color: 'secondary',
-                icon: 'iconsminds-student-male-female',
-                action: 'goToChildrenStudents2',
-              },
+                icon: 'iconsminds-speach-bubble-dialog',
+                action: 'goToForums',
+              }
             ]}
             withChildren={true}
             refreshDataTable={refreshDataTable}
@@ -166,6 +103,7 @@ const CoursesTeacherList = (props: any) => {
     </>
   );
 };
+
 const mapDispatchToProps = { ...courseActions };
 
 const mapStateToProps = ({ loginReducer }: any) => {

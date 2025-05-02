@@ -993,7 +993,9 @@ const App = (props: any) => {
                     {/* APPLICATIONS */}
                     <Route path="/chat" element={<ChatApp />} />
                     <Route path="/foros" element={<ForumListApp />} />
-                    <Route path="/foros2" element={<ForumListApp2 />} />
+                    <Route path="/foros2" element={permissions ? <ForumListApp2 /> : <Login />} />
+                    <Route path="/forumList" element={permissions ? <ForumListApp /> : <Login />} />
+                    <Route path="/forum" element={permissions ? <ForumApp /> : <Login />} />
                     <Route path="/foro-detalle" element={<ForumApp />} />
                     <Route path="/elecciones-personero" element={<ElectionsApp />} />
                     <Route path="/encuestas" element={<Survey />} />
