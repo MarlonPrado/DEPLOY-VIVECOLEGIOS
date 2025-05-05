@@ -139,55 +139,51 @@ const ForumListApp = (props: any) => {
     };
   }
 
-  // Mejorar la función loadForumInteractions con más logs
-  const loadForumInteractions = async (forumId: string) => {
-    console.log('📊 INICIO loadForumInteractions - forumId:', forumId);
-    setLoadingInteractions(true);
+  // Corrige la función loadForumInteractions para manejar la estructura correcta
+const loadForumInteractions = async (forumId: string) => {
+  console.log('📊 INICIO loadForumInteractions - forumId:', forumId);
+  setLoadingInteractions(true);
+  
+  try {
+    console.log('📊 Ejecutando dataForumInteraction para forumId:', forumId);
+    console.log('📊 Enviando consulta GraphQL getAllForumInteraction con variables:', { forumId });
     
-    try {
-      console.log('📊 Ejecutando dataForumInteraction para forumId:', forumId);
+    const result = await props.dataForumInteraction(forumId);
+    console.log('📊 Respuesta completa de dataForumInteraction:', result);
+    
+    // CORRECCIÓN: Acceder a los datos correctamente según la estructura de la respuesta
+    // La respuesta parece ser directamente un objeto con 'data', no 'getForumInteractions'
+    if (result && result.data) {
+      console.log('📊 Datos encontrados en la respuesta');
       
-      // Añadir este log antes de la llamada a la API
-      console.log('📊 Enviando consulta GraphQL getAllForumInteraction con variables:', { forumId });
+      // Verificar si hay edges en la respuesta
+      const interactionsArray = result.data.edges || [];
+      console.log('📊 Número total de interacciones recibidas:', interactionsArray.length);
       
-      const interactionsData = await props.dataForumInteraction(forumId);
+      // Clasificar las interacciones para depuración
+      const comments = interactionsArray.filter((edge: any) => !edge.node?.forumQuestion);
+      const answers = interactionsArray.filter((edge: any) => edge.node?.forumQuestion);
       
-      // Log detallado de la respuesta
-      console.log('📊 Respuesta completa de dataForumInteraction:', interactionsData);
+      console.log('📊 Desglose de interacciones:', {
+        totalInteractions: interactionsArray.length,
+        comentarios: comments.length,
+        respuestasAPreguntas: answers.length
+      });
       
-      console.log('📊 Respuesta de interacciones2:', interactionsData.getForumInteractions);
-      if (interactionsData && interactionsData.getForumInteractions) {
-
-       
-
-        console.log('📊 Datos de interacciones obtenidos:', interactionsData.getForumInteractions);
-        const interactionsArray = interactionsData.getForumInteractions.edges || [];
-        console.log('📊 Número total de interacciones recibidas:', interactionsArray.length);
-        
-        // Clasificar las interacciones para depuración
-        const comments = interactionsArray.filter((edge: any) => !edge.node?.forumQuestion);
-        const answers = interactionsArray.filter((edge: any) => edge.node?.forumQuestion);
-        
-        console.log('📊 Desglose de interacciones:', {
-          totalInteractions: interactionsArray.length,
-          commentarios: comments.length,
-          respuestasAPreguntas: answers.length
-        });
-        
-        // Actualizar el estado con las interacciones
-        setForumInteractions(interactionsArray);
-      } else {
-        console.log('⚠️ No se encontraron interacciones o formato incorrecto:', interactionsData);
-        setForumInteractions([]);
-      }
-    } catch (error) {
-      console.error("❌ ERROR al cargar interacciones:", error);
+      // Actualizar el estado con las interacciones
+      setForumInteractions(interactionsArray);
+    } else {
+      console.log('⚠️ No se encontraron interacciones o formato incorrecto:', result);
       setForumInteractions([]);
-    } finally {
-      setLoadingInteractions(false);
-      console.log('📊 FIN loadForumInteractions');
     }
-  };
+  } catch (error) {
+    console.error("❌ ERROR al cargar interacciones:", error);
+    setForumInteractions([]);
+  } finally {
+    setLoadingInteractions(false);
+    console.log('📊 FIN loadForumInteractions');
+  }
+};
 
   // Manejar cambio en el formulario
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {

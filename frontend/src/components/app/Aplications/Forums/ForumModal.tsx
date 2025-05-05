@@ -43,19 +43,14 @@ const ForumModal = ({
   const commentInputRef = useRef<HTMLInputElement>(null);
   const replyInputRef = useRef<HTMLInputElement>(null);
 
-  // Modifica la parte donde filtramos los comentarios - OPCIÓN 1: Asegurarse que forumInteractions es un array
-  // Esta versión verifica explícitamente si forumInteractions es un array
+  // Actualizar cómo se filtran los comentarios
   const comments = Array.isArray(forumInteractions) 
     ? forumInteractions.filter(interaction => !interaction.node?.forumQuestion)
     : [];
 
   console.log('🔍 Comments array final:', comments.length, comments);
 
-  // OPCIÓN 2: Si el problema está en la estructura anidada - Intentar acceder a los datos correctamente
-  // Descomentar esta línea si la estructura es data.edges en lugar de un array directo
-  // const comments = forumInteractions?.data?.edges?.filter(interaction => !interaction.node?.forumQuestion) || [];
-
-  // Agrupar preguntas y sus respuestas
+  // Agrupar preguntas y sus respuestas (también actualizado)
   const questionsMap = new Map();
   const answers = forumInteractions?.filter(interaction => 
     interaction.node?.forumQuestion
