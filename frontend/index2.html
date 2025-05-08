@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Árbol interactivo de ficheros del frontend</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background-color: #f9f9f9;
+      color: #333;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 10px;
+    }
+    #description {
+      max-width: 900px;
+      margin: 0 auto 20px auto;
+      background: #e9f0f7;
+      border-left: 6px solid #007bff;
+      padding: 10px 20px;
+      font-size: 16px;
+      color: #004085;
+      border-radius: 4px;
+    }
+    #tree-container {
+      max-width: 900px;
+      margin: 0 auto;
+      background: white;
+      border: 1px solid #ddd;
+      padding: 20px;
+      border-radius: 6px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      font-family: monospace;
+      font-size: 14px;
+      line-height: 1.4;
+      user-select: none;
+    }
+    ul.tree {
+      list-style-type: none;
+      padding-left: 20px;
+    }
+    ul.tree ul {
+      margin-left: 15px;
+      padding-left: 15px;
+      border-left: 1px dashed #ccc;
+      display: none;
+      transition: max-height 0.3s ease-out;
+      overflow: hidden;
+    }
+    ul.tree li {
+      margin: 4px 0;
+      cursor: pointer;
+      position: relative;
+    }
+    ul.tree li::before {
+      content: "▶";
+      position: absolute;
+      left: -15px;
+      top: 2px;
+      font-size: 12px;
+      color: #007bff;
+      transition: transform 0.3s ease;
+    }
+    ul.tree li.open::before {
+      transform: rotate(90deg);
+    }
+    ul.tree li.file::before {
+      content: "•";
+      color: #666;
+      cursor: default;
+      position: absolute;
+      left: -15px;
+      top: 2px;
+      transform: none !important;
+    }
+    .folder-name {
+      font-weight: bold;
+      color: #007bff;
+    }
+    .description {
+      font-style: italic;
+      color: #555;
+      margin-left: 5px;
+      font-weight: normal;
+    }
+  </style>
+</head>
+<body>
+  <h1>Árbol interactivo de ficheros del frontend</h1>
+  <div id="description">Haz clic en las carpetas para expandir o contraer y ver su contenido. Las descripciones generales aparecen junto a cada carpeta.</div>
+  <div id="tree-container"></div>
+
+  <script>
+    // Estructura del árbol con descripciones para frontend
+    const treeData = {
+      name: "frontend",
+      description: "Raíz del proyecto frontend",
+      children: [
+        {
+          name: "public",
+          description: "Archivos estáticos y HTML base",
+          children: [
+            { name: "index.html", description: "Plantilla HTML principal", children: [] },
+            { name: "favicon.ico", description: "Ícono del sitio", children: [] },
+            { name: "manifest.json", description: "Configuración de PWA", children: [] },
+            { name: "assets", description: "Recursos estáticos", children: [] }
+          ]
+        },
+        {
+          name: "src",
+          description: "Código fuente principal del frontend",
+          children: [
+            {
+              name: "assets",
+              description: "Archivos estáticos de la aplicación",
+              children: [
+                {
+                  name: "img",
+                  description: "Imágenes",
+                  children: [
+                    {
+                      name: "logos",
+                      description: "Imágenes de logos",
+                      children: [
+                        { name: "AbrazateLogo.png", description: "Logo Abrazate", children: [] },
+                        { name: "gobernacion.png", description: "Logo Gobernación", children: [] },
+                        { name: "login1.jpg", description: "Imagen login1", children: [] },
+                        { name: "LOGO.png", description: "Logo principal", children: [] },
+                        { name: "LOGO2.png", description: "Logo secundario", children: [] },
+                        { name: "minciencias.png", description: "Logo Minciencias", children: [] },
+                        { name: "ufps.png", description: "Logo UFPS", children: [] }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              name: "components",
+              description: "Componentes React",
+              children: [
+                {
+                  name: "common",
+                  description: "Componentes comunes/reutilizables",
+                  children: [
+                    { name: "CustomBootstrap.tsx", description: "Componentes Bootstrap personalizados", children: [] },
+                    {
+                      name: "Data",
+                      description: "Componentes de datos",
+                      children: [
+                        { name: "DataList.tsx", description: "Lista de datos", children: [] },
+                        { name: "HeaderInfoAcademic.tsx", description: "Encabezado info académica", children: [] }
+                      ]
+                    },
+                    { name: "Loader.tsx", description: "Componente Loader", children: [] }
+                  ]
+                },
+                {
+                  name: "styled",
+                  description: "Componentes con estilos",
+                  children: [
+                    { name: "BadgeCustom.tsx", description: "Componente Badge personalizado", children: [] }
+                  ]
+                },
+                {
+                  name: "app",
+                  description: "Componentes específicos de la aplicación",
+                  children: [
+                    { name: "Academic", description: "Componentes académicos", children: [] },
+                    { name: "AcademicAsignatureCourse", description: "Componentes de asignaturas académicas", children: [] },
+                    { name: "AcademicAssignment", description: "Componentes de asignaciones académicas", children: [] },
+                    { name: "AdministratorsCampus", description: "Componentes de administradores de campus", children: [] },
+                    { name: "AdministratorsSchool", description: "Componentes de administradores de escuela", children: [] },
+                    { name: "ClassroomPlan", description: "Componentes de planificación de aulas", children: [] },
+                    { name: "CoordinatorCampus", description: "Componentes de coordinadores de campus", children: [] },
+                    { name: "Course", description: "Componentes de cursos", children: [] },
+                    { name: "Forum", description: "Componentes de foros", children: [] },
+                    { name: "Graphics", description: "Componentes gráficos", children: [] },
+                    { name: "Login", description: "Componentes de login", children: [] },
+                    { name: "School", description: "Componentes de escuela", children: [] },
+                    { name: "SpreadsheetCourse", description: "Componentes de hojas de cálculo de cursos", children: [] },
+                    { name: "Students", description: "Componentes de estudiantes", children: [] },
+                    {
+                      name: "data",
+                      description: "Datos específicos de la aplicación",
+                      children: [
+                        { name: "faq.tsx", description: "Preguntas frecuentes", children: [] }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              name: "constants",
+              description: "Constantes y configuraciones",
+              children: [
+                { name: "AdministratorSchool", description: "Constantes para administradores de escuela", children: [] },
+                { name: "AcademicAsignatureCourse", description: "Constantes para asignaturas académicas", children: [] },
+                { name: "Campus", description: "Constantes para campus", children: [] }
+              ]
+            },
+            {
+              name: "helpers",
+              description: "Funciones auxiliares",
+              children: [
+                { name: "IntlMessages.tsx", description: "Internacionalización", children: [] },
+                { name: "Notification.tsx", description: "Sistema de notificaciones", children: [] }
+              ]
+            },
+            {
+              name: "lang",
+              description: "Archivos de idiomas",
+              children: [
+                {
+                  name: "locales",
+                  description: "Traducciones",
+                  children: [
+                    { name: "es_ES.tsx", description: "Traducciones en español", children: [] }
+                  ]
+                }
+              ]
+            },
+            {
+              name: "routes",
+              description: "Configuración de rutas",
+              children: [
+                { name: "App.tsx", description: "Componente principal de rutas", children: [] }
+              ]
+            },
+            {
+              name: "stores",
+              description: "Estado global (Redux)",
+              children: [
+                {
+                  name: "actions",
+                  description: "Acciones Redux",
+                  children: [
+                    { name: "AcademicActions.ts", description: "Acciones académicas", children: [] },
+                    { name: "AcademicAsignatureCourseActions.ts", description: "Acciones de asignaturas académicas", children: [] },
+                    { name: "AcademicAssignmentActions.ts", description: "Acciones de asignaciones académicas", children: [] },
+                    { name: "AdministratorsCampusActions.ts", description: "Acciones de administradores de campus", children: [] },
+                    { name: "AdministratorsSchoolActions.ts", description: "Acciones de administradores de escuela", children: [] },
+                    { name: "AppActions.ts", description: "Acciones generales de la aplicación", children: [] },
+                    { name: "AuthActions.ts", description: "Acciones de autenticación", children: [] },
+                    { name: "ClassroomPlanActions.ts", description: "Acciones de planificación de aulas", children: [] },
+                    { name: "CommonActions.ts", description: "Acciones comunes", children: [] },
+                    { name: "CoordinatorCampusActions.ts", description: "Acciones de coordinadores de campus", children: [] },
+                    { name: "CourseActions.ts", description: "Acciones de cursos", children: [] },
+                    { name: "ForumActions.ts", description: "Acciones de foros", children: [] },
+                    { name: "GraphicsActions.ts", description: "Acciones gráficas", children: [] },
+                    { name: "LoaderActions.ts", description: "Acciones de carga", children: [] },
+                    { name: "LoginActions.ts", description: "Acciones de login", children: [] },
+                    { name: "NotificationActions.ts", description: "Acciones de notificaciones", children: [] },
+                    { name: "SchoolActions.ts", description: "Acciones de escuela", children: [] },
+                    { name: "SpreadsheetCourseActions.ts", description: "Acciones de hojas de cálculo de cursos", children: [] },
+                    { name: "StudentsActions.ts", description: "Acciones de estudiantes", children: [] },
+                    { name: "ThemeActions.ts", description: "Acciones de temas", children: [] },
+                    { name: "UserActions.ts", description: "Acciones de usuario", children: [] }
+                  ]
+                },
+                {
+                  name: "graphql",
+                  description: "Configuración y consultas GraphQL",
+                  children: [
+                    { name: "CoordinatorCampus", description: "Consultas GraphQL para coordinadores de campus", children: [] }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        { name: ".nvmrc", description: "Versión de Node.js: 18.20.4", children: [] },
+        { name: "webpack.prod.config.js", description: "Configuración de Webpack para producción", children: [] },
+        { name: "package.json", description: "Dependencias y scripts", children: [] }
+      ]
+    };
+
+    // Función para crear el árbol HTML recursivamente
+    function createTree(node) {
+      const li = document.createElement('li');
+      const span = document.createElement('span');
+      span.textContent = node.name;
+      span.classList.add('folder-name');
+      li.appendChild(span);
+
+      // Añadir descripción al lado del nombre
+      if (node.description) {
+        const desc = document.createElement('span');
+        desc.textContent = ` # ${node.description}`;
+        desc.classList.add('description');
+        li.appendChild(desc);
+      }
+
+      if (node.children && node.children.length > 0) {
+        const ul = document.createElement('ul');
+        ul.classList.add('tree');
+        node.children.forEach(child => {
+          ul.appendChild(createTree(child));
+        });
+        li.appendChild(ul);
+
+        // Inicialmente cerrado
+        ul.style.display = 'none';
+
+        // Añadir evento click para abrir/cerrar con animación
+        span.style.cursor = 'pointer';
+        span.addEventListener('click', () => {
+          const isOpen = ul.style.display === 'block';
+          if (isOpen) {
+            ul.style.maxHeight = ul.scrollHeight + 'px';
+            requestAnimationFrame(() => {
+              ul.style.maxHeight = '0';
+            });
+            setTimeout(() => {
+              ul.style.display = 'none';
+              ul.style.maxHeight = null;
+            }, 300);
+            li.classList.remove('open');
+          } else {
+            ul.style.display = 'block';
+            ul.style.maxHeight = '0';
+            requestAnimationFrame(() => {
+              ul.style.maxHeight = ul.scrollHeight + 'px';
+            });
+            setTimeout(() => {
+              ul.style.maxHeight = null;
+            }, 300);
+            li.classList.add('open');
+          }
+        });
+      } else {
+        li.classList.add('file');
+      }
+      return li;
+    }
+
+    // Renderizar el árbol en el contenedor
+    const treeContainer = document.getElementById('tree-container');
+    const ulRoot = document.createElement('ul');
+    ulRoot.classList.add('tree');
+    ulRoot.appendChild(createTree(treeData));
+    treeContainer.appendChild(ulRoot);
+  </script>
+</body>
+</html>

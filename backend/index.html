@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Árbol interactivo de ficheros del backend</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background-color: #f9f9f9;
+      color: #333;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 10px;
+    }
+    #description {
+      max-width: 800px;
+      margin: 0 auto 20px auto;
+      background: #e9f0f7;
+      border-left: 6px solid #007bff;
+      padding: 10px 20px;
+      font-size: 16px;
+      color: #004085;
+      border-radius: 4px;
+    }
+    #tree-container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: white;
+      border: 1px solid #ddd;
+      padding: 20px;
+      border-radius: 6px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      font-family: monospace;
+      font-size: 14px;
+      line-height: 1.4;
+      user-select: none;
+    }
+    ul.tree {
+      list-style-type: none;
+      padding-left: 20px;
+    }
+    ul.tree ul {
+      margin-left: 15px;
+      padding-left: 15px;
+      border-left: 1px dashed #ccc;
+      display: none;
+      transition: max-height 0.3s ease-out;
+      overflow: hidden;
+    }
+    ul.tree li {
+      margin: 4px 0;
+      cursor: pointer;
+      position: relative;
+    }
+    ul.tree li::before {
+      content: "▶";
+      position: absolute;
+      left: -15px;
+      top: 2px;
+      font-size: 12px;
+      color: #007bff;
+      transition: transform 0.3s ease;
+    }
+    ul.tree li.open::before {
+      transform: rotate(90deg);
+    }
+    ul.tree li.file::before {
+      content: "•";
+      color: #666;
+      cursor: default;
+      position: absolute;
+      left: -15px;
+      top: 2px;
+      transform: none !important;
+    }
+    .folder-name {
+      font-weight: bold;
+      color: #007bff;
+    }
+    .description {
+      font-style: italic;
+      color: #555;
+      margin-left: 5px;
+      font-weight: normal;
+    }
+  </style>
+</head>
+<body>
+  <h1>Árbol interactivo de ficheros del backend</h1>
+  <div id="description">Haz clic en las carpetas para expandir o contraer y ver su contenido. Las descripciones generales aparecen junto a cada carpeta.</div>
+  <div id="tree-container"></div>
+
+  <script>
+    // Estructura del árbol con descripciones
+    const treeData = {
+      name: "backend",
+      description: "Raíz del proyecto backend",
+      children: [
+        {
+          name: "app",
+          description: "Código fuente principal de la aplicación backend",
+          children: [
+            {
+              name: "config",
+              description: "Configuraciones generales y específicas de la aplicación",
+              children: [
+                { name: "index.ts", description: "Punto de entrada para configuraciones", children: [] }
+              ]
+            },
+            {
+              name: "graphql",
+              description: "Implementación de GraphQL",
+              children: [
+                { name: "enums", description: "Enumeraciones usadas en GraphQL", children: [] },
+                { name: "helpers", description: "Funciones auxiliares para GraphQL", children: [] },
+                { name: "inputs", description: "Definiciones de inputs para GraphQL, organizados por roles", children: [] },
+                { name: "interfaces", description: "Interfaces TypeScript para GraphQL", children: [] },
+                { name: "middlewares", description: "Middlewares para GraphQL (logs, manejo de errores, tiempos de resolución)", children: [] },
+                { name: "models", description: "Modelos de datos para GraphQL, organizados por roles", children: [] },
+                { name: "modelsUtils", description: "Utilidades para modelos GraphQL", children: [] },
+                { name: "pagination", description: "Lógica de paginación para GraphQL", children: [] },
+                { name: "queries", description: "Definición de queries y mutaciones GraphQL", children: [] },
+                { name: "resolvers", description: "Resolvers GraphQL, organizados por roles", children: [] }
+              ]
+            },
+            {
+              name: "mongo",
+              description: "Scripts y configuraciones para MongoDB (semillas de datos)",
+              children: []
+            },
+            {
+              name: "reports",
+              description: "Plantillas y recursos para generación de reportes",
+              children: [
+                { name: "certificateFinalReport", description: "Reportes finales de certificados", children: [] },
+                { name: "performanceFinalReport", description: "Reportes finales de desempeño", children: [] },
+                { name: "performanceReport", description: "Reportes de desempeño", children: [] }
+              ]
+            },
+            {
+              name: "servers",
+              description: "Configuraciones y definiciones de servidores y permisos",
+              children: []
+            },
+            {
+              name: "test",
+              description: "Pruebas unitarias y de integración",
+              children: []
+            },
+            { name: "index.ts", description: "Punto de entrada principal de la aplicación backend", children: [] }
+          ]
+        },
+        {
+          name: "ssl",
+          description: "Certificados SSL para seguridad",
+          children: [
+            { name: "vivecolegios", description: "Certificados específicos para el dominio vivecolegios", children: [] }
+          ]
+        },
+        { name: ".dockerignore", description: "Archivos ignorados por Docker", children: [] },
+        { name: ".gitignore", description: "Archivos ignorados por Git", children: [] },
+        { name: ".nvmrc", description: "Versión de Node.js para el proyecto", children: [] },
+        { name: ".prettierrc", description: "Configuración de Prettier para formateo de código", children: [] },
+        { name: "businesscard.pdf", description: "Documento PDF (posiblemente información de contacto o presentación)", children: [] },
+        { name: "deploy.sh", description: "Script para despliegue", children: [] },
+        { name: "docker-compose.yaml", description: "Configuración de Docker Compose", children: [] },
+        { name: "Dockerfile", description: "Dockerfile principal para construir la imagen del backend", children: [] },
+        { name: "Dockerfile2", description: "Dockerfile alternativo o para otro entorno", children: [] },
+        { name: "LICENSE", description: "Licencia del proyecto", children: [] },
+        { name: "package.json", description: "Dependencias y scripts de Node.js", children: [] },
+        { name: "README.md", description: "Documentación general del backend", children: [] },
+        { name: "schema.gql", description: "Definición del esquema GraphQL", children: [] },
+        { name: "sonar-project.properties", description: "Configuración para SonarQube (análisis de calidad de código)", children: [] },
+        { name: "tsconfig.json", description: "Configuración de TypeScript", children: [] },
+        { name: "yarn.lock", description: "Archivo de bloqueo de dependencias Yarn", children: [] }
+      ]
+    };
+
+    // Función para crear el árbol HTML recursivamente
+    function createTree(node) {
+      const li = document.createElement('li');
+      const span = document.createElement('span');
+      span.textContent = node.name;
+      span.classList.add('folder-name');
+      li.appendChild(span);
+
+      // Añadir descripción al lado del nombre
+      if (node.description) {
+        const desc = document.createElement('span');
+        desc.textContent = ` # ${node.description}`;
+        desc.classList.add('description');
+        li.appendChild(desc);
+      }
+
+      if (node.children && node.children.length > 0) {
+        const ul = document.createElement('ul');
+        ul.classList.add('tree');
+        node.children.forEach(child => {
+          ul.appendChild(createTree(child));
+        });
+        li.appendChild(ul);
+
+        // Inicialmente cerrado
+        ul.style.display = 'none';
+
+        // Añadir evento click para abrir/cerrar con animación
+        span.style.cursor = 'pointer';
+        span.addEventListener('click', () => {
+          const isOpen = ul.style.display === 'block';
+          if (isOpen) {
+            ul.style.maxHeight = ul.scrollHeight + 'px';
+            requestAnimationFrame(() => {
+              ul.style.maxHeight = '0';
+            });
+            setTimeout(() => {
+              ul.style.display = 'none';
+              ul.style.maxHeight = null;
+            }, 300);
+            li.classList.remove('open');
+          } else {
+            ul.style.display = 'block';
+            ul.style.maxHeight = '0';
+            requestAnimationFrame(() => {
+              ul.style.maxHeight = ul.scrollHeight + 'px';
+            });
+            setTimeout(() => {
+              ul.style.maxHeight = null;
+            }, 300);
+            li.classList.add('open');
+          }
+        });
+      } else {
+        li.classList.add('file');
+      }
+      return li;
+    }
+
+    // Renderizar el árbol en el contenedor
+    const treeContainer = document.getElementById('tree-container');
+    const ulRoot = document.createElement('ul');
+    ulRoot.classList.add('tree');
+    ulRoot.appendChild(createTree(treeData));
+    treeContainer.appendChild(ulRoot);
+  </script>
+</body>
+</html>
