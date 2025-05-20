@@ -48,6 +48,12 @@ const ForumListApp = (props: any) => {
     setViewModal(!viewModal);
   };
 
+  // Verificar si el usuario es estudiante
+  const isStudentRole = props.loginReducer?.role?.id === "619551d1882a2fb6525a3078";
+  
+  console.log('Rol de usuario:', props.loginReducer?.role?.id);
+  console.log('¿Es estudiante?', isStudentRole);
+
   // Cargar datos iniciales
   useEffect(() => {
     if (schoolId) {
@@ -374,10 +380,13 @@ const loadForumInteractions = async (forumId: string) => {
                   <h1>Foros</h1>
                   {courseName && <p className="text-muted">Curso: {courseName}</p>}
                 </div>
-                <Button color="primary" onClick={() => setFormModal(true)}>
-                  <i className="simple-icon-plus mr-2"></i>
-                  Nuevo Foro
-                </Button>
+                {/* Mostrar botón de crear solo si NO es estudiante */}
+                {!isStudentRole && (
+                  <Button color="primary" onClick={() => setFormModal(true)}>
+                    <i className="simple-icon-plus mr-2"></i>
+                    Nuevo Foro
+                  </Button>
+                )}
               </div>
             </CardBody>
           </Card>
@@ -411,24 +420,29 @@ const loadForumInteractions = async (forumId: string) => {
                         <i className="simple-icon-eye mr-1"></i>
                         Ver foro
                       </Button>
-                      <Button 
-                        color={item.node.active ? "warning" : "success"} 
-                        size="sm" 
-                        className="mr-2 d-flex align-items-center"
-                        onClick={() => handleToggleActive(item)}
-                      >
-                        <i className={`simple-icon-${item.node.active ? 'close' : 'check'} mr-1`}></i>
-                        {item.node.active ? 'Inactivar' : 'Activar'}
-                      </Button>
-                      <Button 
-                        color="danger" 
-                        size="sm"
-                        className="d-flex align-items-center"
-                        onClick={() => handleDelete(item)}
-                      >
-                        <i className="simple-icon-trash mr-1"></i>
-                        Eliminar
-                      </Button>
+                      {/* Mostrar botones de administración solo si NO es estudiante */}
+                      {!isStudentRole && (
+                        <>
+                          <Button 
+                            color={item.node.active ? "warning" : "success"} 
+                            size="sm" 
+                            className="mr-2 d-flex align-items-center"
+                            onClick={() => handleToggleActive(item)}
+                          >
+                            <i className={`simple-icon-${item.node.active ? 'close' : 'check'} mr-1`}></i>
+                            {item.node.active ? 'Inactivar' : 'Activar'}
+                          </Button>
+                          <Button 
+                            color="danger" 
+                            size="sm"
+                            className="d-flex align-items-center"
+                            onClick={() => handleDelete(item)}
+                          >
+                            <i className="simple-icon-trash mr-1"></i>
+                            Eliminar
+                          </Button>
+                        </>
+                      )}
                     </div>
                   </div>
                 </CardBody>
@@ -446,8 +460,8 @@ const loadForumInteractions = async (forumId: string) => {
         </Colxx>
       </Row>
 
-      {/* Modal para crear foro */}
-      <Modal isOpen={formModal} toggle={() => setFormModal(!formModal)} size="lg">
+      {/* Modal para crear foro - Se muestra solo si NO es estudiante */}
+      <Modal isOpen={formModal && !isStudentRole} toggle={() => setFormModal(!formModal)} size="lg">
         <ModalHeader toggle={() => setFormModal(!formModal)}>
           Crear Nuevo Foro
         </ModalHeader>
@@ -518,6 +532,7 @@ const loadForumInteractions = async (forumId: string) => {
         formatDate={formatDate}
         onSaveComment={handleSaveComment}
         onAddQuestion={handleAddQuestion}
+        isStudentRole={isStudentRole}  // Pasar el rol a ForumModal
         reloadInteractions={() => {
           if (currentForum && currentForum.id) {
             console.log('🔄 Recargando interacciones desde ForumModal - forumId:', currentForum.id);

@@ -117,7 +117,7 @@ export class ForumInteractionResolver {
   ): Promise<Boolean | null> {
     let data = await this.repository.findOneBy(id);
     let result = await this.repository.deleteOne({ _id: new ObjectId(id) });
-    return result?.result?.ok === 1 ?? true;
+    return result?.result?.ok === 1 ? true : false;
   }
 
   @FieldResolver((_type) => User, { nullable: true })

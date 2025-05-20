@@ -21,6 +21,7 @@ interface ForumModalProps {
   onSaveComment: (comment: string, questionId?: string) => void;
   onAddQuestion: () => void;
   reloadInteractions: () => void; // Agregar esta línea
+  isStudentRole: boolean; // Añadir esta propiedad
 }
 
 const ForumModal = ({
@@ -34,7 +35,8 @@ const ForumModal = ({
   formatDate,
   onSaveComment,
   onAddQuestion,
-  reloadInteractions // Asegúrate de incluirla aquí también
+  reloadInteractions, // Asegúrate de incluirla aquí también
+  isStudentRole // Incluirla en la desestructuración
 }: ForumModalProps) => {
   const [activeTab, setActiveTab] = useState('1');
   const [newComment, setNewComment] = useState('');
