@@ -35,3 +35,10 @@ export const MUTATION_DELETE_FORUM = gql`
     delete: deleteForum(id: $id)
   }
 `;
+
+// Nueva mutación para eliminar interacciones de foro
+export const MUTATION_DELETE_FORUM_INTERACTION = gql`
+  mutation DeleteForumInteraction($id: String!) {
+    deleteForumInteraction(id: $id)
+  }
+`;

@@ -369,6 +369,27 @@ const loadForumInteractions = async (forumId: string) => {
     console.log('📝 Preparando para agregar pregunta al foro:', currentForum.id);
   };
 
+  const handleDeleteComment = async (commentId: string) => {
+    if (window.confirm('¿Está seguro que desea eliminar este comentario?')) {
+      try {
+        setLoadingInteractions(true);
+        await props.deleteForumInteraction(commentId, true);
+        
+        // Recargar las interacciones después de eliminar
+        if (currentForum?.id) {
+          console.log('🗑️ Comentario eliminado, recargando interacciones...');
+          await loadForumInteractions(currentForum.id);
+          createNotification('success', 'Éxito', 'Comentario eliminado correctamente');
+        }
+      } catch (error) {
+        console.error("Error al eliminar comentario:", error);
+        createNotification('error', 'Error', 'No se pudo eliminar el comentario');
+      } finally {
+        setLoadingInteractions(false);
+      }
+    }
+  };
+
   return (
     <>
       <Row>
@@ -533,6 +554,7 @@ const loadForumInteractions = async (forumId: string) => {
         onSaveComment={handleSaveComment}
         onAddQuestion={handleAddQuestion}
         isStudentRole={isStudentRole}  // Pasar el rol a ForumModal
+        onDeleteComment={handleDeleteComment} // Añadir esta línea
         reloadInteractions={() => {
           if (currentForum && currentForum.id) {
             console.log('🔄 Recargando interacciones desde ForumModal - forumId:', currentForum.id);

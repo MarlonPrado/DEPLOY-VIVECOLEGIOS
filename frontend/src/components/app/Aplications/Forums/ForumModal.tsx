@@ -22,6 +22,8 @@ interface ForumModalProps {
   onAddQuestion: () => void;
   reloadInteractions: () => void; // Agregar esta línea
   isStudentRole: boolean; // Añadir esta propiedad
+  // Añadimos la nueva función para eliminar comentarios
+  onDeleteComment: (id: string) => void;
 }
 
 const ForumModal = ({
@@ -36,7 +38,8 @@ const ForumModal = ({
   onSaveComment,
   onAddQuestion,
   reloadInteractions, // Asegúrate de incluirla aquí también
-  isStudentRole // Incluirla en la desestructuración
+  isStudentRole, // Incluirla en la desestructuración
+  onDeleteComment
 }: ForumModalProps) => {
   const [activeTab, setActiveTab] = useState('1');
   const [newComment, setNewComment] = useState('');
@@ -351,9 +354,23 @@ const ForumModal = ({
                                   : 'Usuario'
                                 }
                               </h6>
-                              <span className="comment-date">
-                                {interaction.node?.createdAt ? formatDate(interaction.node.createdAt) : '-'}
-                              </span>
+                              <div className="d-flex align-items-center">
+                                <span className="comment-date mr-2">
+                                  {interaction.node?.createdAt ? formatDate(interaction.node.createdAt) : '-'}
+                                </span>
+                                
+                                {/* Botón para eliminar comentario - Solo visible si no es estudiante */}
+                                {!isStudentRole && (
+                                  <Button 
+                                    color="link" 
+                                    className="p-0 text-danger" 
+                                    onClick={() => onDeleteComment(interaction.node?.id)}
+                                    title="Eliminar comentario"
+                                  >
+                                    <i className="simple-icon-trash"></i>
+                                  </Button>
+                                )}
+                              </div>
                             </div>
                             <p className="comment-text">
                               {interaction.node?.comment || 'Sin contenido'}
@@ -459,9 +476,23 @@ const ForumModal = ({
                                             : 'Usuario'
                                           }
                                         </h6>
-                                        <span className="comment-date">
-                                          {answer.node?.createdAt ? formatDate(answer.node.createdAt) : '-'}
-                                        </span>
+                                        <div className="d-flex align-items-center">
+                                          <span className="comment-date mr-2">
+                                            {answer.node?.createdAt ? formatDate(answer.node.createdAt) : '-'}
+                                          </span>
+                                          
+                                          {/* Botón para eliminar respuesta */}
+                                          {!isStudentRole && (
+                                            <Button 
+                                              color="link" 
+                                              className="p-0 text-danger" 
+                                              onClick={() => onDeleteComment(answer.node?.id)}
+                                              title="Eliminar respuesta"
+                                            >
+                                              <i className="simple-icon-trash"></i>
+                                            </Button>
+                                          )}
+                                        </div>
                                       </div>
                                       <p className="answer-text">
                                         {renderFormattedText(answer.node?.comment)}

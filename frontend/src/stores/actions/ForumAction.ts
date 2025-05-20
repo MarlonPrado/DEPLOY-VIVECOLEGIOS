@@ -1,6 +1,13 @@
 import { createNotification } from "../../helpers/Notification";
 import { client } from '../graphql';
-import { MUTATION_CHANGE_ACTIVE_FORUM, MUTATION_CREATE_FORUM, MUTATION_CREATE_INTERACTION_FORUM, MUTATION_DELETE_FORUM, MUTATION_UPDATE_FORUM } from '../graphql/Forum/ForumMutations';
+import { 
+  MUTATION_CHANGE_ACTIVE_FORUM, 
+  MUTATION_CREATE_FORUM, 
+  MUTATION_CREATE_INTERACTION_FORUM, 
+  MUTATION_DELETE_FORUM, 
+  MUTATION_DELETE_FORUM_INTERACTION, // Añadir la importación
+  MUTATION_UPDATE_FORUM 
+} from '../graphql/Forum/ForumMutations';
 import { QUERY_GET_ALL_FORUM, QUERY_GET_FORUM, QUERY_GET_INTERACTION_FORUM } from '../graphql/Forum/ForumQueries';
 // import { QUERY_GET_FORUMS_BY_COURSE } from '../graphql/Forum/ForumQueries'; // Comentada para implementación futura
 
@@ -242,28 +249,36 @@ export const deleteForum = (id: any, showToast: boolean) => {
   };
 };
 
-// Función comentada para implementación futura
-/*
-export const getForumsByCourse = (courseId: string, schoolId: string) => {
+// Añadir después de la función deleteForum
+export const deleteForumInteraction = (id: string, showToast: boolean = true) => {
   return async (dispatch: any) => {
     try {
-      let listData = {};
+      let dataDelete = null;
       await client
-        .query({
-          query: QUERY_GET_FORUMS_BY_COURSE,
-          variables: {
-            courseId,
-            schoolId,
-          },
+        .mutate({
+          mutation: MUTATION_DELETE_FORUM_INTERACTION,
+          variables: { id },
         })
-        .then((result: any) => {          
-          listData = result.data.data.edges;
+        .then((dataResponse: any) => {
+          if (dataResponse.errors?.length > 0) {
+            dataResponse.errors.forEach((error: any) => {
+              if (showToast) {
+                createNotification('error', 'Error al eliminar', 'No se pudo eliminar el comentario.');
+              }
+            });
+          } else {
+            dataDelete = dataResponse.data.deleteForumInteraction;
+            if (showToast) {
+              createNotification('success', 'Comentario eliminado', 'El comentario ha sido eliminado correctamente.');
+            }
+          }
         });
-      return listData;
+      return dataDelete;
     } catch (error) {
-      createNotification('error', 'error', '');
+      if (showToast) {
+        createNotification('error', 'Error inesperado', 'Ocurrió un error al intentar eliminar el comentario.');
+      }
       return error;
     }
   };
 };
-*/
