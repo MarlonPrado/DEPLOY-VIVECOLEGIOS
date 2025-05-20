@@ -553,8 +553,9 @@ const loadForumInteractions = async (forumId: string) => {
         formatDate={formatDate}
         onSaveComment={handleSaveComment}
         onAddQuestion={handleAddQuestion}
-        isStudentRole={isStudentRole}  // Pasar el rol a ForumModal
-        onDeleteComment={handleDeleteComment} // Añadir esta línea
+        isStudentRole={isStudentRole}
+        onDeleteComment={handleDeleteComment}
+        currentUserId={props.loginReducer?.userId} // Añadir esta línea para pasar el ID de usuario
         reloadInteractions={() => {
           if (currentForum && currentForum.id) {
             console.log('🔄 Recargando interacciones desde ForumModal - forumId:', currentForum.id);

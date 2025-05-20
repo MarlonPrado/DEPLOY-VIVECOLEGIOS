@@ -58,6 +58,7 @@ export const QUERY_GET_INTERACTION_FORUM = gql`
             lastName
           }
           forumId
+          createdByUserId
               
             
         }

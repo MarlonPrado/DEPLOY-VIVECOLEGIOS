@@ -24,6 +24,7 @@ interface ForumModalProps {
   isStudentRole: boolean; // Añadir esta propiedad
   // Añadimos la nueva función para eliminar comentarios
   onDeleteComment: (id: string) => void;
+  currentUserId: string; // Añadir esta propiedad
 }
 
 const ForumModal = ({
@@ -39,7 +40,8 @@ const ForumModal = ({
   onAddQuestion,
   reloadInteractions, // Asegúrate de incluirla aquí también
   isStudentRole, // Incluirla en la desestructuración
-  onDeleteComment
+  onDeleteComment,
+  currentUserId // Incluirla en la desestructuración
 }: ForumModalProps) => {
   const [activeTab, setActiveTab] = useState('1');
   const [newComment, setNewComment] = useState('');
@@ -359,8 +361,8 @@ const ForumModal = ({
                                   {interaction.node?.createdAt ? formatDate(interaction.node.createdAt) : '-'}
                                 </span>
                                 
-                                {/* Botón para eliminar comentario - Solo visible si no es estudiante */}
-                                {!isStudentRole && (
+                                {/* Botón para eliminar comentario - Lógica actualizada */}
+                                {(!isStudentRole || (isStudentRole && interaction.node?.createdByUserId === currentUserId)) && (
                                   <Button 
                                     color="link" 
                                     className="p-0 text-danger" 
@@ -481,8 +483,8 @@ const ForumModal = ({
                                             {answer.node?.createdAt ? formatDate(answer.node.createdAt) : '-'}
                                           </span>
                                           
-                                          {/* Botón para eliminar respuesta */}
-                                          {!isStudentRole && (
+                                          {/* Botón para eliminar respuesta - Lógica actualizada */}
+                                          {(!isStudentRole || (isStudentRole && answer.node?.createdByUserId === currentUserId)) && (
                                             <Button 
                                               color="link" 
                                               className="p-0 text-danger" 
