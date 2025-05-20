@@ -155,6 +155,11 @@ const AcademicAsignatureCourseBasicList = (props: any) => {
 
   const additionalFunction = async (item: any, btn: any) => {
     switch (btn?.action) {
+      case 'goToForums':
+        goToChildren(
+          `/foros?schoolId=${props?.loginReducer?.schoolId}&courseId=${item?.course?.id}&courseName=${item?.course?.name}&academicAsignatureCourseId=${item?.id}&asignatureId=${item.academicAsignatureId}&asignatureName=${item.academicAsignature?.name}`
+        );
+        break;
       case 'goToChildrenStandard':
         goToChildren(
           `/standardAcademic?gradeId=${item?.course?.academicGradeId}&asignatureId=${item.academicAsignatureId}&academicAsignatureCourseId=${item?.id}`,
@@ -289,6 +294,13 @@ const AcademicAsignatureCourseBasicList = (props: any) => {
                 icon: 'iconsminds-blackboard',
                 action: 'goToChildrenRecoveryExperienceLearning',
                 hide: currentMenuPermissionExperienceLearning?.readAction ? false : false
+              },
+              {
+                id: 5,
+                label: 'Mis foros',
+                color: 'primary',
+                icon: 'iconsminds-speach-bubble-dialog',
+                action: 'goToForums',
               },
             ]}
             withChildren={true}

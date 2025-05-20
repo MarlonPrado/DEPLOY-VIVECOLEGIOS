@@ -42,6 +42,7 @@ const ForumListApp = (props: any) => {
   const courseId = searchParams.get('courseId');
   const courseName = searchParams.get('courseName');
 
+
   // Toggle para abrir/cerrar modal - MOVIDO AQUÍ ARRIBA para evitar el error
   const toggleViewModal = () => {
     setViewModal(!viewModal);
@@ -88,6 +89,8 @@ const ForumListApp = (props: any) => {
       });
     }
   };
+
+  console.log('Uusuario actual:', props.loginReducer);
 
   // Función para cargar foros
   const loadForums = async (defaultSchoolId: string | null = null) => {

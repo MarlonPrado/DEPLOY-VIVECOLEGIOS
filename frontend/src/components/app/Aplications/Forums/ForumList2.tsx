@@ -55,9 +55,9 @@ const CoursesTeacherList = (props: any) => {
   // Función para manejar navegación
   const additionalFunction = async (item: any, btn: any) => {
     switch (btn?.action) {
-      case 'goToForums':
-        // Navegar a la ruta correcta con los parámetros necesarios
-        goToChildren(`/foros?schoolId=${props?.loginReducer?.schoolId}&courseId=${item.id}&courseName=${item.name}`);
+      case 'goToAsignaturas':
+        // Navegar a la vista de asignaturas del curso seleccionado
+        goToChildren(`/academicAsignatureCourseBasic?courseId=${item.id}&courseName=${item.name}`);
         break;
       default:
         break;
@@ -83,10 +83,10 @@ const CoursesTeacherList = (props: any) => {
             childrenButtons={[
               {
                 id: 1,
-                label: 'Mis foros',
+                label: 'Mis asignaturas',
                 color: 'primary',
-                icon: 'iconsminds-speach-bubble-dialog',
-                action: 'goToForums',
+                icon: 'iconsminds-blackboard',
+                action: 'goToAsignaturas',
               }
             ]}
             withChildren={true}

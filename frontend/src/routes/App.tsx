@@ -991,6 +991,7 @@ const App = (props: any) => {
                     {/* ACADEMIC */}
 
                     {/* APPLICATIONS */}
+                    {/* forumList puede ser el futuro forumlist para estudiantes */}
                     <Route path="/chat" element={<ChatApp />} />
                     <Route path="/foros" element={<ForumListApp />} />
                     <Route path="/foros2" element={permissions ? <ForumListApp2 /> : <Login />} />
