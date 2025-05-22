@@ -1,73 +1,63 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { connect } from 'react-redux';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { 
-  Button, Card, CardBody, Row, Modal, ModalHeader, 
-  ModalBody, ModalFooter, FormGroup, Label, Input, Nav, 
-  NavItem, TabContent, TabPane, InputGroup, Alert
-} from 'reactstrap';
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
+import { Button, Card, CardBody, Row, Modal, ModalHeader, ModalBody, ModalFooter, FormGroup, Label, Input } from 'reactstrap';
 import * as forumActions from '../../../../stores/actions/ForumAction';
 import { Colxx } from '../../../common/CustomBootstrap';
 import { createNotification } from '../../../../helpers/Notification';
-import IntlMessages from '../../../../helpers/IntlMessages';
-import classnames from 'classnames';
+import DataList from '../../../common/Data/DataList';
+import { Loader } from '../../../common/Loader';
 import ForumModal from './ForumModal';
+import { FORUM_COLUMN_LIST } from '../../../../constants/Forum/ForumConstants';
 
-const ForumListApp = (props: any) => {
-  // Estados para la aplicación
-  const [items, setItems] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [searchParams] = useSearchParams();
-  const [formModal, setFormModal] = useState(false);
+const ForumList = (props: any) => {
+  // Estados principales (siguiendo el estándar)
+  const [dataTable, setDataTable] = useState(null);
+  const [columns, setColumns] = useState(FORUM_COLUMN_LIST);
+  const [modalOpen, setModalOpen] = useState(false);
   const [viewModal, setViewModal] = useState(false);
+  
+  // Estado para el item seleccionado (siguiendo el estándar)
+  const [data, setData] = useState(null);
+  
+  // Estados para el formulario
   const [formData, setFormData] = useState({
     name: '',
     description: '',
     details: ''
   });
-  const [currentForum, setCurrentForum] = useState<any>(null);
-  const [activeTab, setActiveTab] = useState('1');
   
-  // Nuevos estados para comentarios e interacciones
+  // Estados para interacciones
   const [forumInteractions, setForumInteractions] = useState([]);
-  const [newComment, setNewComment] = useState('');
   const [loadingInteractions, setLoadingInteractions] = useState(false);
   const [loadingForum, setLoadingForum] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
-  const commentInputRef = useRef<HTMLInputElement>(null);
   
   // Navegación y parámetros
   const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
   const schoolId = searchParams.get('schoolId');
   const courseId = searchParams.get('courseId');
   const courseName = searchParams.get('courseName');
 
-
-  // Toggle para abrir/cerrar modal - MOVIDO AQUÍ ARRIBA para evitar el error
-  const toggleViewModal = () => {
-    setViewModal(!viewModal);
-  };
-
   // Verificar si el usuario es estudiante
   const isStudentRole = props.loginReducer?.role?.id === "619551d1882a2fb6525a3078";
   
-  console.log('Rol de usuario:', props.loginReducer?.role?.id);
-  console.log('¿Es estudiante?', isStudentRole);
-
-  // Cargar datos iniciales
+  // Cargar datos al iniciar
   useEffect(() => {
     if (schoolId) {
-      loadForums();
+      getDataTable();
     } else if (props.loginReducer?.schoolId) {
-      loadForums(props.loginReducer.schoolId);
+      getDataTable(props.loginReducer.schoolId);
     } else {
       createNotification('error', 'Error', 'No se encontró ID de institución');
       navigate('/home');
     }
   }, []);
 
-  // Función para formatear fechas de manera amigable
-  const formatDate = (dateString: string) => {
+  // Función para formatear fechas (utilidad)
+  const formatDate = useCallback((dateString: string) => {
     if (!dateString) return '-';
     
     const date = new Date(dateString);
@@ -76,16 +66,12 @@ const ForumListApp = (props: any) => {
     const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
     
     if (diffDays === 0) {
-      // Hoy - Mostrar hora
       return `Hoy a las ${date.toLocaleTimeString('es-ES', {hour: '2-digit', minute:'2-digit'})}`;
     } else if (diffDays === 1) {
-      // Ayer
       return `Ayer a las ${date.toLocaleTimeString('es-ES', {hour: '2-digit', minute:'2-digit'})}`;
     } else if (diffDays < 7) {
-      // Esta semana
       return `Hace ${diffDays} días`;
     } else {
-      // Más de una semana
       return date.toLocaleDateString('es-ES', {
         year: 'numeric', 
         month: 'long', 
@@ -94,125 +80,193 @@ const ForumListApp = (props: any) => {
         minute: '2-digit'
       });
     }
-  };
+  }, []);
 
-  console.log('Uusuario actual:', props.loginReducer);
-
-  // Función para cargar foros
-  const loadForums = async (defaultSchoolId: string | null = null) => {
-    setIsLoading(true);
+  // Cargar datos (siguiendo estándar con useCallback)
+  const getDataTable = useCallback(async (defaultSchoolId: string | null = null) => {
+    setDataTable(null);
+    
     try {
-      // Usar el schoolId de la URL o el valor por defecto
       const schoolIdToUse = schoolId || defaultSchoolId;
       if (!schoolIdToUse) {
         throw new Error("ID de institución no encontrado");
       }
       
-      // Cargar todos los foros
-      const result = await props.getListAllForum(schoolIdToUse);
-      console.log("Foros cargados:", result);
+      const listData = await props.getListAllForum(schoolIdToUse);
       
-      // Filtrar por courseId si está disponible usando JSON.stringify para buscar el ID
-      let filteredForums = result || [];
+      // Filtrar por courseId si está disponible
+      let filteredForums = listData || [];
       if (courseId) {
-        console.log("Filtrando por courseId:", courseId);
         filteredForums = filteredForums.filter((forum: any) => {
           const forumString = JSON.stringify(forum);
           return forumString.includes(courseId);
         });
-        console.log("Foros después del filtrado:", filteredForums.length);
       }
       
-      setItems(filteredForums);
+      // Formatear datos para la tabla (siguiendo estándar)
+      if (Array.isArray(filteredForums)) {
+        setDataTable(filteredForums.map((forum: any) => {
+          forum.node.createdAt_format = formatDate(forum.node.createdAt);
+          return forum;
+        }));
+      } else {
+        console.error("Respuesta no es un array:", filteredForums);
+        setDataTable([]);
+      }
     } catch (error) {
       console.error("Error al cargar foros:", error);
       createNotification('error', 'Error', 'No se pudieron cargar los foros');
-      setItems([]);
-    } finally {
-      setIsLoading(false);
+      setDataTable([]);
     }
-  };
+  }, [schoolId, courseId, props.getListAllForum, formatDate]);
 
-  // Define una interfaz para las interacciones para mejor tipado
-  interface ForumInteractionEdge {
-    node?: {
-      id?: string;
-      comment?: string;
-      createdAt?: string;
-      forumQuestion?: any;
-      createdByUser?: {
-        name?: string;
-        lastName?: string;
-      };
-      // Otros campos que pueda tener
-    };
-  }
+  // Refrescar datos (estándar)
+  const refreshDataTable = useCallback(async () => {
+    await getDataTable(schoolId || props.loginReducer?.schoolId);
+  }, [getDataTable, schoolId, props.loginReducer?.schoolId]);
 
-  // Corrige la función loadForumInteractions para manejar la estructura correcta
-const loadForumInteractions = async (forumId: string) => {
-  console.log('📊 INICIO loadForumInteractions - forumId:', forumId);
-  setLoadingInteractions(true);
-  
-  try {
-    console.log('📊 Ejecutando dataForumInteraction para forumId:', forumId);
-    console.log('📊 Enviando consulta GraphQL getAllForumInteraction con variables:', { forumId });
+  // Cargar interacciones
+  const loadForumInteractions = useCallback(async (forumId: string) => {
+    setLoadingInteractions(true);
     
-    const result = await props.dataForumInteraction(forumId);
-    console.log('📊 Respuesta completa de dataForumInteraction:', result);
-    
-    // CORRECCIÓN: Acceder a los datos correctamente según la estructura de la respuesta
-    // La respuesta parece ser directamente un objeto con 'data', no 'getForumInteractions'
-    if (result && result.data) {
-      console.log('📊 Datos encontrados en la respuesta');
+    try {
+      const result = await props.dataForumInteraction(forumId);
       
-      // Verificar si hay edges en la respuesta
-      const interactionsArray = result.data.edges || [];
-      console.log('📊 Número total de interacciones recibidas:', interactionsArray.length);
-      
-      // Clasificar las interacciones para depuración
-      const comments = interactionsArray.filter((edge: any) => !edge.node?.forumQuestion);
-      const answers = interactionsArray.filter((edge: any) => edge.node?.forumQuestion);
-      
-      console.log('📊 Desglose de interacciones:', {
-        totalInteractions: interactionsArray.length,
-        comentarios: comments.length,
-        respuestasAPreguntas: answers.length
-      });
-      
-      // Actualizar el estado con las interacciones
-      setForumInteractions(interactionsArray);
-    } else {
-      console.log('⚠️ No se encontraron interacciones o formato incorrecto:', result);
+      if (result && result.data) {
+        const interactionsArray = result.data.edges || [];
+        setForumInteractions(interactionsArray);
+      } else {
+        setForumInteractions([]);
+      }
+    } catch (error) {
+      console.error("Error al cargar interacciones:", error);
       setForumInteractions([]);
+    } finally {
+      setLoadingInteractions(false);
     }
-  } catch (error) {
-    console.error("❌ ERROR al cargar interacciones:", error);
-    setForumInteractions([]);
-  } finally {
-    setLoadingInteractions(false);
-    console.log('📊 FIN loadForumInteractions');
-  }
-};
+  }, [props.dataForumInteraction]);
 
-  // Manejar cambio en el formulario
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // FUNCIONES CRUD ESTÁNDAR
+  
+  // Ver/Editar (siguiendo estándar)
+  const viewEditData = useCallback(async (id: string) => {
+    try {
+      setLoadingForum(true);
+      setErrorMessage('');
+      
+      // Obtener datos completos del foro
+      const forumData = await props.dataForum(id);
+      
+      if (forumData && forumData.getForum) {
+        setData(forumData.getForum);
+        
+        // Para el modal de creación/edición
+        setFormData({
+          name: forumData.getForum.name || '',
+          description: forumData.getForum.description || '',
+          details: forumData.getForum.details || ''
+        });
+        
+        // Cargar interacciones para el modal de visualización
+        loadForumInteractions(id);
+        setViewModal(true);
+      } else {
+        setErrorMessage('No se pudieron cargar los detalles completos del foro.');
+        createNotification('error', 'Error', 'No se pudo cargar el foro');
+      }
+    } catch (error) {
+      console.error("Error al cargar detalles del foro:", error);
+      createNotification('error', 'Error', 'No se pudo cargar el foro');
+    } finally {
+      setLoadingForum(false);
+    }
+  }, [props.dataForum, loadForumInteractions]);
+
+  // Activar/Inactivar (siguiendo estándar)
+  const changeActiveData = useCallback(async (active: boolean, id: string) => {
+    try {
+      await props.changeActiveForum(active, id, true);
+      createNotification('success', 'Éxito', `Foro ${active ? 'activado' : 'inactivado'} correctamente`);
+      refreshDataTable();
+    } catch (error) {
+      console.error("Error al actualizar estado:", error);
+      createNotification('error', 'Error', 'No se pudo actualizar el estado');
+    }
+  }, [props.changeActiveForum, refreshDataTable]);
+
+  // Eliminar (siguiendo estándar)
+  const deleteData = useCallback(async (id: string) => {
+    if (window.confirm('¿Está seguro que desea eliminar este foro?')) {
+      try {
+        await props.deleteForum(id, true);
+        createNotification('success', 'Éxito', 'Foro eliminado correctamente');
+        refreshDataTable();
+      } catch (error) {
+        console.error("Error al eliminar foro:", error);
+        createNotification('error', 'Error', 'No se pudo eliminar el foro');
+      }
+    }
+  }, [props.deleteForum, refreshDataTable]);
+  
+  // Eliminar varios (siguiendo estándar)
+  const deleteAll = useCallback(async (items: any[]) => {
+    if (window.confirm(`¿Está seguro que desea eliminar ${items.length} foros?`)) {
+      try {
+        const promises = items.map((item) => props.deleteForum(item.node.id, false));
+        await Promise.all(promises);
+        createNotification('success', 'Éxito', 'Foros eliminados correctamente');
+        refreshDataTable();
+      } catch (error) {
+        console.error("Error al eliminar foros:", error);
+        createNotification('error', 'Error', 'No se pudieron eliminar los foros');
+      }
+    }
+  }, [props.deleteForum, refreshDataTable]);
+  
+  // Activar/Inactivar varios (siguiendo estándar)
+  const changeActiveDataAll = useCallback(async (items: any[]) => {
+    if (window.confirm(`¿Está seguro que desea cambiar el estado de ${items.length} foros?`)) {
+      try {
+        const promises = items.map((item) => {
+          // Invertir el estado actual
+          return props.changeActiveForum(!item.node.active, item.node.id, false);
+        });
+        
+        await Promise.all(promises);
+        createNotification('success', 'Éxito', 'Estados actualizados correctamente');
+        refreshDataTable();
+      } catch (error) {
+        console.error("Error al actualizar estados:", error);
+        createNotification('error', 'Error', 'No se pudieron actualizar los estados');
+      }
+    }
+  }, [props.changeActiveForum, refreshDataTable]);
+
+  // Navegación adicional (siguiendo estándar)
+  const additionalFunction = useCallback((item: any, btn: any) => {
+    // No hay funciones adicionales específicas para foros
+    // pero mantenemos la función para consistencia con el patrón
+  }, []);
+
+  // MANEJO DEL FORMULARIO
+  
+  // Input change
+  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData({
-      ...formData,
+    setFormData(prev => ({
+      ...prev,
       [name]: value
-    });
-  };
+    }));
+  }, []);
 
-  // Crear o actualizar foro
-  const handleSaveForum = async () => {
+  // Submit del formulario
+  const handleSaveForum = useCallback(async () => {
     if (!formData.name || !formData.description) {
       createNotification('warning', 'Advertencia', 'Por favor complete los campos obligatorios');
       return;
     }
 
     try {
-      setIsLoading(true);
-      
       const dataToSave: any = {
         name: formData.name,
         description: formData.description,
@@ -225,160 +279,68 @@ const loadForumInteractions = async (forumId: string) => {
       if (props.loginReducer.campusId) {
         dataToSave.campusId = props.loginReducer.campusId;
       }
-
-      await props.saveNewForum(dataToSave);
-      createNotification('success', 'Éxito', 'Foro creado correctamente');
       
-      // Resetear el formulario y cerrar modal
-      setFormData({
-        name: '',
-        description: '',
-        details: ''
-      });
-      setFormModal(false);
+      // Si hay un ID, es actualización
+      if (data?.id) {
+        dataToSave.id = data.id;
+        await props.updateForum(dataToSave);
+        createNotification('success', 'Éxito', 'Foro actualizado correctamente');
+      } else {
+        // Si no hay ID, es creación
+        await props.saveNewForum(dataToSave);
+        createNotification('success', 'Éxito', 'Foro creado correctamente');
+      }
+      
+      // Resetear formulario y cerrar modal
+      setFormData({ name: '', description: '', details: '' });
+      setModalOpen(false);
+      setData(null);
       
       // Recargar foros
-      loadForums(schoolId || props.loginReducer.schoolId);
+      refreshDataTable();
     } catch (error) {
       console.error("Error al guardar foro:", error);
       createNotification('error', 'Error', 'No se pudo guardar el foro');
-    } finally {
-      setIsLoading(false);
     }
-  };
+  }, [formData, data, props.loginReducer, courseId, schoolId, props.saveNewForum, props.updateForum, refreshDataTable]);
 
-  // Activar/Inactivar foro
-  const handleToggleActive = async (forum: any) => {
-    try {
-      setIsLoading(true);
-      const newStatus = !forum.node.active;
-      await props.changeActiveForum(newStatus, forum.node.id, true);
-      createNotification('success', 'Éxito', `Foro ${newStatus ? 'activado' : 'inactivado'} correctamente`);
-      loadForums(schoolId || props.loginReducer.schoolId);
-    } catch (error) {
-      console.error("Error al actualizar estado:", error);
-      createNotification('error', 'Error', 'No se pudo actualizar el estado');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Eliminar foro
-  const handleDelete = async (forum: any) => {
-    if (window.confirm('¿Está seguro que desea eliminar este foro?')) {
-      try {
-        setIsLoading(true);
-        await props.deleteForum(forum.node.id, true);
-        createNotification('success', 'Éxito', 'Foro eliminado correctamente');
-        loadForums(schoolId || props.loginReducer.schoolId);
-      } catch (error) {
-        console.error("Error al eliminar foro:", error);
-        createNotification('error', 'Error', 'No se pudo eliminar el foro');
-      } finally {
-        setIsLoading(false);
-      }
-    }
-  };
-
-  // Asegurarte de que esta función esté actualizada para el ForumModal
-  const handleViewForum = async (forum: any) => {
-    try {
-      console.log('🔍 Abriendo modal de foro:', forum.node.id);
-      setCurrentForum(forum.node);
-      setViewModal(true); // Primero abrimos el modal
-      setLoadingForum(true);
-      setErrorMessage('');
-      
-      console.log('🔍 Cargando datos completos del foro...');
-      const forumData = await props.dataForum(forum.node.id);
-      
-      if (forumData && forumData.getForum) {
-        console.log('🔍 Datos completos del foro obtenidos:', forumData.getForum);
-        setCurrentForum(forumData.getForum);
-        
-        // Cargar interacciones del foro
-        console.log('🔍 Iniciando carga de interacciones para forumId:', forum.node.id);
-        loadForumInteractions(forum.node.id);
-      } else {
-        console.log('⚠️ Error: No se pudieron obtener datos completos del foro');
-        setErrorMessage('No se pudieron cargar los detalles completos del foro.');
-      }
-    } catch (error) {
-      console.error("❌ ERROR al cargar detalles del foro:", error);
-      setErrorMessage('No se pudieron cargar los detalles del foro. Por favor intente nuevamente.');
-    } finally {
-      setLoadingForum(false);
-    }
-  };
-
-  // Guardar un nuevo comentario o respuesta a pregunta
-  const handleSaveComment = async (comment: string, questionId?: string) => {
-    if (!comment.trim() || !currentForum) return;
+  // Guardar comentario
+  const handleSaveComment = useCallback(async (comment: string, questionId?: string) => {
+    if (!comment.trim() || !data) return;
     
     try {
       setLoadingInteractions(true);
       setErrorMessage('');
       
-      // Verificamos que el currentForum existe y tiene id
-      if (!currentForum || !currentForum.id) {
-        throw new Error("No se pudo identificar el foro actual");
-      }
-      
       const commentData: any = {
         comment: comment,
-        forumId: currentForum.id
+        forumId: data.id
       };
       
-      // Si es una respuesta a una pregunta, agregamos el ID de la pregunta
       if (questionId) {
         commentData.forumQuestionId = questionId;
-        console.log('📝 Enviando respuesta a pregunta:', commentData);
-      } else {
-        console.log('📝 Enviando comentario simple:', commentData);
       }
       
-      console.log('📝 Ejecutando mutación GraphQL para guardar comentario/respuesta...');
-      
-      const result = await props.saveIntetactionForum(commentData);
-      console.log('📝 Respuesta de guardar interacción:', result);
-      
-      // Recargar comentarios
-      console.log('🔄 Recargando interacciones después de guardar...');
-      await loadForumInteractions(currentForum.id);
-      
-      // Notificar éxito
+      await props.saveIntetactionForum(commentData);
+      await loadForumInteractions(data.id);
       createNotification('success', 'Éxito', 'Comentario guardado correctamente');
     } catch (error) {
-      console.error("❌ ERROR al guardar comentario/respuesta:", error);
-      setErrorMessage('No se pudo guardar. Por favor intente nuevamente.');
+      console.error("Error al guardar comentario:", error);
       createNotification('error', 'Error', 'No se pudo guardar el comentario');
     } finally {
       setLoadingInteractions(false);
     }
-  };
+  }, [data, props.saveIntetactionForum, loadForumInteractions]);
 
-  // Agregar una nueva pregunta
-  const handleAddQuestion = () => {
-    // Esta función ahora es manejada por el modal de preguntas
-    if (!currentForum) {
-      createNotification('warning', 'Advertencia', 'No se pudo identificar el foro actual');
-      return;
-    }
-    
-    // Esta función se pasará al modal de preguntas para su procesamiento
-    console.log('📝 Preparando para agregar pregunta al foro:', currentForum.id);
-  };
-
-  const handleDeleteComment = async (commentId: string) => {
+  // Eliminar comentario
+  const handleDeleteComment = useCallback(async (commentId: string) => {
     if (window.confirm('¿Está seguro que desea eliminar este comentario?')) {
       try {
         setLoadingInteractions(true);
         await props.deleteForumInteraction(commentId, true);
         
-        // Recargar las interacciones después de eliminar
-        if (currentForum?.id) {
-          console.log('🗑️ Comentario eliminado, recargando interacciones...');
-          await loadForumInteractions(currentForum.id);
+        if (data?.id) {
+          await loadForumInteractions(data.id);
           createNotification('success', 'Éxito', 'Comentario eliminado correctamente');
         }
       } catch (error) {
@@ -388,7 +350,43 @@ const loadForumInteractions = async (forumId: string) => {
         setLoadingInteractions(false);
       }
     }
-  };
+  }, [data, props.deleteForumInteraction, loadForumInteractions]);
+
+  // Abrir modal de creación
+  const handleNewForum = useCallback(() => {
+    if (isStudentRole) {
+      createNotification('warning', 'Acceso restringido', 'No tienes permisos para crear foros');
+      return;
+    }
+    
+    setData(null);
+    setFormData({ name: '', description: '', details: '' });
+    setModalOpen(true);
+  }, [isStudentRole]);
+
+  // Toggle para modales
+  const toggleFormModal = useCallback(() => {
+    setModalOpen(!modalOpen);
+    if (modalOpen) {
+      setData(null);
+      setFormData({ name: '', description: '', details: '' });
+    }
+  }, [modalOpen]);
+
+  const toggleViewModal = useCallback(() => {
+    setViewModal(!viewModal);
+  }, [viewModal]);
+
+  // Definir botones personalizados
+  const childrenButtons = [
+    {
+      id: 1,
+      label: 'Ver foro',
+      color: 'info',
+      icon: 'simple-icon-eye',
+      action: 'viewForum',
+    }
+  ];
 
   return (
     <>
@@ -401,9 +399,9 @@ const loadForumInteractions = async (forumId: string) => {
                   <h1>Foros</h1>
                   {courseName && <p className="text-muted">Curso: {courseName}</p>}
                 </div>
-                {/* Mostrar botón de crear solo si NO es estudiante */}
+                {/* Botón nuevo foro condicionado por rol */}
                 {!isStudentRole && (
-                  <Button color="primary" onClick={() => setFormModal(true)}>
+                  <Button color="primary" onClick={handleNewForum}>
                     <i className="simple-icon-plus mr-2"></i>
                     Nuevo Foro
                   </Button>
@@ -412,79 +410,38 @@ const loadForumInteractions = async (forumId: string) => {
             </CardBody>
           </Card>
 
-          {isLoading ? (
-            <div className="text-center my-5">
-              <div className="loading"></div>
-            </div>
-          ) : items.length > 0 ? (
-            items.map((item: any, index: number) => (
-              <Card key={item.node.id} className="mb-3">
-                <CardBody>
-                  <div className="d-flex justify-content-between">
-                    <div className="w-75">
-                      <h5 className="mb-1">{item.node.name}</h5>
-                      <p className="text-muted mb-2">{item.node.description}</p>
-                      <small className="text-muted">
-                        Creado: {formatDate(item.node.createdAt)}
-                      </small>
-                      {!item.node.active && (
-                        <span className="badge badge-danger ml-2">Inactivo</span>
-                      )}
-                    </div>
-                    <div className="d-flex">
-                      <Button 
-                        color="info" 
-                        size="sm" 
-                        className="mr-2 d-flex align-items-center"
-                        onClick={() => handleViewForum(item)}
-                      >
-                        <i className="simple-icon-eye mr-1"></i>
-                        Ver foro
-                      </Button>
-                      {/* Mostrar botones de administración solo si NO es estudiante */}
-                      {!isStudentRole && (
-                        <>
-                          <Button 
-                            color={item.node.active ? "warning" : "success"} 
-                            size="sm" 
-                            className="mr-2 d-flex align-items-center"
-                            onClick={() => handleToggleActive(item)}
-                          >
-                            <i className={`simple-icon-${item.node.active ? 'close' : 'check'} mr-1`}></i>
-                            {item.node.active ? 'Inactivar' : 'Activar'}
-                          </Button>
-                          <Button 
-                            color="danger" 
-                            size="sm"
-                            className="d-flex align-items-center"
-                            onClick={() => handleDelete(item)}
-                          >
-                            <i className="simple-icon-trash mr-1"></i>
-                            Eliminar
-                          </Button>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                </CardBody>
-              </Card>
-            ))
+          {/* DataList siguiendo el estándar */}
+          {dataTable === null ? (
+            <Colxx sm={12} className="d-flex justify-content-center">
+              <Loader />
+            </Colxx>
           ) : (
-            <Card>
-              <CardBody className="text-center py-5">
-                <i className="iconsminds-speach-bubble-dialog mb-4" style={{ fontSize: '3rem', opacity: 0.4 }}></i>
-                <h3>No hay foros disponibles</h3>
-                <p className="text-muted">Cree un nuevo foro usando el botón "Nuevo Foro"</p>
-              </CardBody>
-            </Card>
+            <DataList
+              data={dataTable}
+              columns={columns}
+              match={location}
+              modalOpen={modalOpen}
+              setModalOpen={setModalOpen}
+              viewEditData={viewEditData}
+              deleteData={deleteData}
+              changeActiveData={changeActiveData}
+              deleteAll={deleteAll}
+              changeActiveDataAll={changeActiveDataAll}
+              additionalFunction={additionalFunction}
+              childrenButtons={childrenButtons}
+              withChildren={true}
+              refreshDataTable={refreshDataTable}
+              hideNewButton={true}
+              isStudentRole={isStudentRole}
+            />
           )}
         </Colxx>
       </Row>
 
-      {/* Modal para crear foro - Se muestra solo si NO es estudiante */}
-      <Modal isOpen={formModal && !isStudentRole} toggle={() => setFormModal(!formModal)} size="lg">
-        <ModalHeader toggle={() => setFormModal(!formModal)}>
-          Crear Nuevo Foro
+      {/* Modal para crear/editar foro (siguiendo estándar) */}
+      <Modal isOpen={modalOpen && !isStudentRole} toggle={toggleFormModal} size="lg">
+        <ModalHeader toggle={toggleFormModal}>
+          {data ? 'Editar Foro' : 'Crear Nuevo Foro'}
         </ModalHeader>
         <ModalBody>
           <FormGroup>
@@ -525,43 +482,33 @@ const loadForumInteractions = async (forumId: string) => {
           </FormGroup>
         </ModalBody>
         <ModalFooter>
-          <Button color="secondary" onClick={() => setFormModal(false)}>
+          <Button color="secondary" onClick={toggleFormModal}>
             Cancelar
           </Button>
-          <Button color="primary" onClick={handleSaveForum} disabled={isLoading}>
-            {isLoading ? (
-              <>
-                <span className="spinner-border spinner-border-sm mr-1" role="status" aria-hidden="true"></span>
-                Guardando...
-              </>
-            ) : (
-              'Guardar Foro'
-            )}
+          <Button color="primary" onClick={handleSaveForum}>
+            {data ? 'Actualizar' : 'Guardar'} Foro
           </Button>
         </ModalFooter>
       </Modal>
 
-      {/* ForumModal para ver y comentar en foros */}
+      {/* ForumModal para ver detalles y comentarios */}
       <ForumModal
         isOpen={viewModal}
         toggle={toggleViewModal}
-        forum={currentForum}
+        forum={data}
         forumInteractions={forumInteractions}
         loadingForum={loadingForum}
         loadingInteractions={loadingInteractions}
         errorMessage={errorMessage}
         formatDate={formatDate}
         onSaveComment={handleSaveComment}
-        onAddQuestion={handleAddQuestion}
+        onAddQuestion={() => {}} // No implementado
         isStudentRole={isStudentRole}
         onDeleteComment={handleDeleteComment}
-        currentUserId={props.loginReducer?.userId} // Añadir esta línea para pasar el ID de usuario
+        currentUserId={props.loginReducer?.userId}
         reloadInteractions={() => {
-          if (currentForum && currentForum.id) {
-            console.log('🔄 Recargando interacciones desde ForumModal - forumId:', currentForum.id);
-            loadForumInteractions(currentForum.id);
-          } else {
-            console.log('⚠️ No se puede recargar: currentForum o currentForum.id es null/undefined');
+          if (data?.id) {
+            loadForumInteractions(data.id);
           }
         }}
       />
@@ -573,6 +520,6 @@ const mapStateToProps = ({ loginReducer }: any) => {
   return { loginReducer };
 };
 
-export default connect(mapStateToProps, {
-  ...forumActions
-})(ForumListApp);
+const mapDispatchToProps = { ...forumActions };
+
+export default connect(mapStateToProps, mapDispatchToProps)(ForumList);

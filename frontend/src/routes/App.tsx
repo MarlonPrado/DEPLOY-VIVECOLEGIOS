@@ -208,6 +208,8 @@ const ForumListApp = React.lazy(() => {
     /* webpackChunkName: "ForumListApp" */ '../components/app/Aplications/Forums/ForumList'
   );
 });
+ 
+
 
 const ForumListApp2 = React.lazy(() => {
   return import(
@@ -993,7 +995,7 @@ const App = (props: any) => {
                     {/* APPLICATIONS */}
                     {/* forumList puede ser el futuro forumlist para estudiantes */}
                     <Route path="/chat" element={<ChatApp />} />
-                    <Route path="/foros" element={<ForumListApp />} />
+                    <Route path="/foros" element={permissions ? <ForumListApp />: <Login />} />
                     <Route path="/foros2" element={permissions ? <ForumListApp2 /> : <Login />} />
                     <Route path="/forumList" element={permissions ? <ForumListApp /> : <Login />} />
                     <Route path="/forum" element={permissions ? <ForumApp /> : <Login />} />
