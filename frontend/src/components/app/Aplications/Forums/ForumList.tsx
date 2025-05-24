@@ -39,6 +39,7 @@ const ForumList = (props: any) => {
   const [searchParams] = useSearchParams();
   const schoolId = searchParams.get('schoolId');
   const courseId = searchParams.get('courseId');
+  const academicAsignatureCourseId = searchParams.get('academicAsignatureCourseId');
   const courseName = searchParams.get('courseName');
 
   // Verificar si el usuario es estudiante
@@ -94,21 +95,45 @@ const ForumList = (props: any) => {
       
       const listData = await props.getListAllForum(schoolIdToUse);
       
-      // Filtrar por courseId si está disponible
+      // NUEVA LÓGICA DE FILTRADO PRECISA
       let filteredForums = listData || [];
-      if (courseId) {
-        filteredForums = filteredForums.filter((forum: any) => {
-          const forumString = JSON.stringify(forum);
-          return forumString.includes(courseId);
-        });
+      
+      // Verificar si la URL tiene parámetros específicos
+      const hasUrlParams = academicAsignatureCourseId || courseId;
+      
+      if (hasUrlParams) {
+        console.log("Filtrando por URL params - academicAsignatureCourseId:", academicAsignatureCourseId);
+        
+        // Si hay academicAsignatureCourseId en la URL, SOLO mostrar foros con ese ID específico
+        if (academicAsignatureCourseId) {
+          filteredForums = filteredForums.filter((forum: any) => {
+            // Comparación exacta con el valor en BD
+            return forum?.node?.academicAsignatureCourseId === academicAsignatureCourseId;
+          });
+        } 
+        // Caso de respaldo, si hay courseId pero no academicAsignatureCourseId
+        else if (courseId) {
+          filteredForums = filteredForums.filter((forum: any) => {
+            // Filtrado por courseId como respaldo
+            return forum?.node?.courseId === courseId;
+          });
+        }
+      } else {
+        // Si NO hay parámetros en la URL, mostrar TODOS los foros
+        // Incluyendo foros institucionales (academicAsignatureCourseId = null)
+        console.log("Mostrando todos los foros (incluidos institucionales)");
       }
       
       // Formatear datos para la tabla (siguiendo estándar)
       if (Array.isArray(filteredForums)) {
-        setDataTable(filteredForums.map((forum: any) => {
-          forum.node.createdAt_format = formatDate(forum.node.createdAt);
+        setDataTable(filteredForums.map((forum: any, index: number) => {
+          if (forum && forum.node) {
+            // Añadir key única para resolver warning de React
+            forum.key = forum.node.id || `forum-${index}`;
+            forum.node.createdAt_format = formatDate(forum.node.createdAt);
+          }
           return forum;
-        }));
+        }).filter(Boolean));
       } else {
         console.error("Respuesta no es un array:", filteredForums);
         setDataTable([]);
@@ -118,7 +143,7 @@ const ForumList = (props: any) => {
       createNotification('error', 'Error', 'No se pudieron cargar los foros');
       setDataTable([]);
     }
-  }, [schoolId, courseId, props.getListAllForum, formatDate]);
+  }, [schoolId, courseId, academicAsignatureCourseId, props.getListAllForum, formatDate]);
 
   // Refrescar datos (estándar)
   const refreshDataTable = useCallback(async () => {
@@ -272,7 +297,7 @@ const ForumList = (props: any) => {
         description: formData.description,
         details: formData.details,
         schoolId: schoolId || props.loginReducer.schoolId,
-        academicAsignatureCourseId: courseId || null,
+        academicAsignatureCourseId: academicAsignatureCourseId || null,
         schoolYearId: props.loginReducer.schoolYear
       };
 
