@@ -119,9 +119,15 @@ const ForumList = (props: any) => {
           });
         }
       } else {
-        // Si NO hay parámetros en la URL, mostrar TODOS los foros
-        // Incluyendo foros institucionales (academicAsignatureCourseId = null)
-        console.log("Mostrando todos los foros (incluidos institucionales)");
+        // Si NO hay parámetros en la URL, SOLO mostrar foros INSTITUCIONALES
+        // (donde academicAsignatureCourseId sea null o "null")
+        console.log("Mostrando SOLO foros institucionales (academicAsignatureCourseId = null)");
+        
+        filteredForums = filteredForums.filter((forum: any) => {
+          const forumAsignatureId = forum?.node?.academicAsignatureCourseId;
+          // Filtrar para mostrar solo los que tienen academicAsignatureCourseId null o "null"
+          return forumAsignatureId === null || forumAsignatureId === "null" || forumAsignatureId === undefined;
+        });
       }
       
       // Formatear datos para la tabla (siguiendo estándar)

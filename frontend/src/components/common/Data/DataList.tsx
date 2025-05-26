@@ -69,7 +69,6 @@ const DataList = (props: any) => {
     if (cm && cm.readAction) {
       setCurrentMenu(cm);
     } else {
-      console.log("MLP HP ELSE")
       history(`/home`);
       createNotification('warning', 'notPermissions', '');
     }
