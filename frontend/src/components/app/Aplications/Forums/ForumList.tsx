@@ -188,14 +188,15 @@ const ForumList = (props: any) => {
       // Obtener datos completos del foro
       const forumData = await props.dataForum(id);
       
-      if (forumData && forumData.getForum) {
-        setData(forumData.getForum);
+      // Verificar la estructura correcta de los datos
+      if (forumData && forumData.data) {  // ← CAMBIO AQUÍ: Verificar forumData.data
+        setData(forumData.data);  // ← CAMBIO AQUÍ: Establecer forumData.data
         
         // Para el modal de creación/edición
         setFormData({
-          name: forumData.getForum.name || '',
-          description: forumData.getForum.description || '',
-          details: forumData.getForum.details || ''
+          name: forumData.data.name || '',  // ← CAMBIO AQUÍ
+          description: forumData.data.description || '',  // ← CAMBIO AQUÍ
+          details: forumData.data.details || ''  // ← CAMBIO AQUÍ
         });
         
         // Cargar interacciones para el modal de visualización
