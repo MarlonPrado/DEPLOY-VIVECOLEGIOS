@@ -20,6 +20,9 @@
 .forum-description {
   margin-bottom: 0;
   color: rgba(255, 255, 255, 0.85);
+  font-size: 1.05rem;
+  line-height: 1.5;
+  color: #212529;
 }
 
 .modal-close-button {
@@ -57,12 +60,12 @@
 }
 
 .section-title {
-  font-size: 1.1rem;
+  font-size: 0.8rem; /* Reducido desde 0.85rem */
+  text-transform: uppercase;
+  letter-spacing: 0.4px; /* Reducido desde 0.5px */
   font-weight: 600;
-  margin-bottom: 1rem;
-  padding-bottom: 0.5rem;
-  border-bottom: 1px solid #e9ecef;
-  color: #212529;
+  color: #6c757d;
+  margin-bottom: 0.75rem;
 }
 
 .info-section {
@@ -140,7 +143,9 @@
   overflow-y: auto;
   padding-right: 0.5rem;
   margin-bottom: 1rem;
-  max-height: 350px;
+  max-height: 320px;
+  overflow-y: auto;
+  padding-right: 0.25rem;
 }
 
 .comment-item,
@@ -395,6 +400,12 @@
   overflow-y: auto;
 }
 
+.forum-header-content {
+  word-break: break-word;
+  overflow-wrap: break-word;
+  max-width: 90%;
+}
+
 .forum-modal .modal-header i {
   font-size: 1.5rem;
   color: #145388;
@@ -415,6 +426,8 @@
   border-radius: 0.5rem;
   background-color: #f8f9fa;
   transition: all 0.2s;
+  border-left: 3px solid #145388;
+  margin-bottom: 1rem;
 }
 
 .comment-card:hover {
@@ -422,8 +435,8 @@
 }
 
 .user-avatar {
-  width: 40px;
-  height: 40px;
+  width: 35px;
+  height: 35px;
   border-radius: 50%;
   background-color: #145388;
   color: white;
@@ -432,6 +445,7 @@
   justify-content: center;
   font-weight: 600;
   margin-right: 0.75rem;
+  font-size: 0.85rem;
 }
 
 .user-name {
@@ -443,6 +457,9 @@
 .comment-body {
   padding-left: 3rem;
   white-space: pre-wrap;
+  font-size: 0.9rem; /* Reducido desde 0.95rem */
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 .empty-state-icon {
@@ -457,6 +474,121 @@
 .comment-input-area {
   border-top: 1px solid #e9ecef;
   background-color: #f8f9fa;
-  position: sticky;
-  bottom: 0;
+  box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+}
+
+.comment-input-area .input-group {
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+.comment-input-area .form-control {
+  border-radius: 0.25rem 0 0 0.25rem;
+  padding-left: 1rem;
+}
+
+.comment-input-area .btn {
+  border-radius: 0 0.25rem 0.25rem 0;
+}
+
+/* Mejoras en el diseño del input de comentarios */
+.comment-input-area .input-group {
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+.comment-input-area .form-control {
+  border-radius: 20px 0 0 20px;
+  padding-left: 1.2rem;
+}
+
+.comment-input-area .btn {
+  border-radius: 0 20px 20px 0;
+  padding-right: 1.2rem;
+}
+
+/* Conservar estilos existentes que son necesarios */
+/* ...resto de estilos... */
+
+.status-badge {
+  font-size: 0.7rem;
+  padding: 0.25rem 0.5rem;
+  font-weight: 400;
+  opacity: 0.85;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.07);
+}
+
+.forum-details {
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+.forum-details-text {
+  font-size: 0.9rem; /* Reducido desde 1rem */
+  line-height: 1.5;
+  color: #495057;
+}
+
+/* Mantener estilos mínimos de navegación y badges */
+.nav-link .badge {
+  margin-left: 5px;
+  font-size: 0.7rem;
+  vertical-align: text-top;
+}
+
+/* Asegurarse que el texto no se salga del contenedor */
+.forum-modal {
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: break-word;
+}
+
+.forum-description-text {
+  font-size: 0.95rem; /* Reducido desde 1.05rem */
+  line-height: 1.4;
+  color: #212529;
+}
+
+/* Añadir estos estilos al final del archivo */
+
+.exit-button-container {
+  padding: 0 0.5rem;
+  width: 100%;
+  margin-bottom: 1rem; /* Espacio antes del área de input */
+}
+
+.exit-button {
+  width: 100%;
+  padding: 0.75rem; /* Aumentado para mejor área táctil */
+  font-weight: 500;
+  transition: all 0.2s;
+  border-radius: 0.25rem;
+  color: #495057;
+  background-color: #f8f9fa;
+  border-color: #ced4da;
+}
+
+.exit-button:hover, .exit-button:focus {
+  background-color: #e9ecef;
+}
+
+/* Media query para dispositivos móviles */
+@media (max-width: 767.98px) {
+  .exit-button {
+    padding: 0.85rem; /* Área táctil más grande para dedos */
+    font-size: 1rem; /* Texto más grande */
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+  }
+  
+  .modal-right .modal-dialog {
+    max-width: 100%; /* Modal a ancho completo en móviles */
+  }
+  
+  .modal-right .modal-body {
+    padding-bottom: 1rem; /* Espacio adicional */
+  }
+  
+  .comment-input-area {
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
+  }
 }

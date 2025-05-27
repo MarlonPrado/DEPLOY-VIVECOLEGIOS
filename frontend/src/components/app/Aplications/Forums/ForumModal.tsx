@@ -71,11 +71,11 @@ const ForumModal = ({
     }
   };
 
-  console.log('ForumModal rendered with forum:', forum);
-  console.log('ForumInteractions:', forumInteractions);
-  console.log('LoadingForum:', loadingForum);
-  console.log('LoadingInteractions:', forum);
-
+  console.log('Estado del foro:', {
+    rawValue: forum?.active,
+    typeOf: typeof forum?.active,
+    booleanValue: Boolean(forum?.active)
+  });
 
   const handleSaveComment = () => {
     if (!newComment.trim()) return;
@@ -95,13 +95,12 @@ const ForumModal = ({
       <ModalHeader toggle={toggle}>
         <div className="d-flex align-items-center">
           <i className="iconsminds-speach-bubble-dialog mr-2"></i>
-          <div>
-
+          <div className="forum-header-content">
             <h5 className="mb-0">{loadingForum ? 'Cargando...' : forum?.name}</h5>
-            {forum?.active ? (
-              <Badge color="success" pill className="ml-0 mt-1">Activo</Badge>
+            {(forum?.active === true || forum?.active === "true") ? (
+              <Badge color="primary" pill className="status-badge">Activo</Badge>
             ) : (
-              <Badge color="secondary" pill className="ml-0 mt-1">Inactivo</Badge>
+              <Badge color="light" pill className="status-badge">Inactivo</Badge>
             )}
           </div>
         </div>
@@ -127,13 +126,13 @@ const ForumModal = ({
         {!loadingForum && (
           <>
             <div className="forum-details mb-4">
-              <h6 className="text-muted mb-2">Descripción</h6>
-              <p className="border-bottom pb-3">{forum?.description || 'Sin descripción'}</p>
+              <h6 className="section-title">Descripción</h6>
+              <p className="border-bottom pb-3 forum-description-text">{forum?.description || 'Sin descripción'}</p>
               
-              <h6 className="text-muted mb-2">Detalles</h6>
+              <h6 className="section-title">Detalles</h6>
               <div className="details-content border-bottom pb-3">
                 {forum?.details ? (
-                  <div className="formatted-content">{forum.details}</div>
+                  <div className="formatted-content forum-details-text">{forum.details}</div>
                 ) : (
                   <p className="text-muted">No hay detalles disponibles</p>
                 )}
@@ -145,7 +144,7 @@ const ForumModal = ({
                   <small className="text-muted d-block">Actualización: {forum?.updatedAt ? formatDate(forum.updatedAt) : '-'}</small>
                 </div>
                 <div>
-                  <small className="text-muted d-block">
+                  <small className="text-muted d-block text-right">
                     Creado por: {forum?.createdByUser?.name ? 
                       `${forum.createdByUser.name} ${forum.createdByUser.lastName || ''}` : '-'}
                   </small>
@@ -155,7 +154,8 @@ const ForumModal = ({
             
             <div className="comments-section mt-4">
               <h6 className="comment-section-title d-flex justify-content-between align-items-center">
-                <span>Comentarios ({comments.length})</span>
+                <span>Comentarios ({Array.isArray(forumInteractions) ? 
+                  forumInteractions.filter(interaction => !interaction.node?.forumQuestion).length : 0})</span>
               </h6>
               
               <div className="comments-list mt-3" style={{maxHeight: "350px", overflowY: "auto"}}>
@@ -166,44 +166,46 @@ const ForumModal = ({
                     </div>
                     <p className="mt-2 text-muted small">Cargando comentarios...</p>
                   </div>
-                ) : comments.length > 0 ? (
-                  comments.map((interaction: any, index: number) => (
-                    <div key={interaction.node?.id || index} className="comment-card mb-3">
-                      <div className="comment-header d-flex justify-content-between">
-                        <div className="d-flex align-items-center">
-                          <div className="user-avatar">
-                            {interaction.node?.createdByUser?.name?.[0] || 'U'}
-                            {interaction.node?.createdByUser?.lastName?.[0] || ''}
-                          </div>
-                          <div>
-                            <div className="user-name">
-                              {interaction.node?.createdByUser ? 
-                                `${interaction.node.createdByUser.name || ''} ${interaction.node.createdByUser.lastName || ''}`.trim() 
-                                : 'Usuario'
-                              }
+                ) : (Array.isArray(forumInteractions) && forumInteractions.filter(interaction => !interaction.node?.forumQuestion).length > 0) ? (
+                  forumInteractions
+                    .filter(interaction => !interaction.node?.forumQuestion)
+                    .map((interaction: any, index: number) => (
+                      <div key={interaction.node?.id || index} className="comment-card mb-3">
+                        <div className="comment-header d-flex justify-content-between">
+                          <div className="d-flex align-items-center">
+                            <div className="user-avatar">
+                              {interaction.node?.createdByUser?.name?.[0] || 'U'}
+                              {interaction.node?.createdByUser?.lastName?.[0] || ''}
                             </div>
-                            <small className="text-muted">
-                              {interaction.node?.createdAt ? formatDate(interaction.node.createdAt) : '-'}
-                            </small>
+                            <div>
+                              <div className="user-name">
+                                {interaction.node?.createdByUser ? 
+                                  `${interaction.node.createdByUser.name || ''} ${interaction.node.createdByUser.lastName || ''}`.trim() 
+                                  : 'Usuario'
+                                }
+                              </div>
+                              <small className="text-muted">
+                                {interaction.node?.createdAt ? formatDate(interaction.node.createdAt) : '-'}
+                              </small>
+                            </div>
                           </div>
+                          
+                          {(!isStudentRole || (isStudentRole && interaction.node?.createdByUserId === currentUserId)) && (
+                            <Button 
+                              color="link" 
+                              className="p-0 text-danger" 
+                              onClick={() => onDeleteComment(interaction.node?.id)}
+                              title="Eliminar comentario"
+                            >
+                              <i className="simple-icon-trash"></i>
+                            </Button>
+                          )}
                         </div>
-                        
-                        {(!isStudentRole || (isStudentRole && interaction.node?.createdByUserId === currentUserId)) && (
-                          <Button 
-                            color="link" 
-                            className="p-0 text-danger" 
-                            onClick={() => onDeleteComment(interaction.node?.id)}
-                            title="Eliminar comentario"
-                          >
-                            <i className="simple-icon-trash"></i>
-                          </Button>
-                        )}
+                        <div className="comment-body mt-2">
+                          {interaction.node?.comment || 'Sin contenido'}
+                        </div>
                       </div>
-                      <div className="comment-body mt-2">
-                        {interaction.node?.comment || 'Sin contenido'}
-                      </div>
-                    </div>
-                  ))
+                    ))
                 ) : (
                   <div className="text-center py-4">
                     <div className="empty-state-icon">
@@ -215,12 +217,25 @@ const ForumModal = ({
                 )}
               </div>
             </div>
+
+            {/* Botón de salir FUERA de la sección de comentarios */}
+            <div className="exit-button-container">
+              <Button 
+                color="secondary" 
+                block 
+                outline 
+                onClick={toggle}
+                className="exit-button mt-4"
+              >
+                Salir de comentario
+              </Button>
+            </div>
           </>
         )}
       </ModalBody>
       
-      <ModalFooter className="d-block p-0">
-        <div className="comment-input-area p-3">
+      <ModalFooter className="p-0">
+        <div className="comment-input-area p-3 w-100">
           <InputGroup>
             <Input
               type="text"

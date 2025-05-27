@@ -28,6 +28,7 @@ export const QUERY_GET_FORUM = gql`
     data: getForum(id: $id) {
       id
       name
+      active
       details
       description
       version
