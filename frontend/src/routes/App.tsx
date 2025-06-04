@@ -10,6 +10,11 @@ import { isMultiColorActive } from '../constants/defaultValues';
 import AppLocale from '../lang';
 import * as LoginActions from '../stores/actions/LoginActions';
 
+const CustomVideoTutorials = React.lazy(() => {
+  return import(
+    /* webpackChunkName: "CustomVideoTutorials" */ '../components/app/VideoTutorials/CustomVideoTutorials'
+  );
+});
 const SchoolYearList = React.lazy(() => {
   return import(
     /* webpackChunkName: "SchoolYearList" */ '../components/app/SchoolYear/SchoolYearList'
@@ -997,6 +1002,8 @@ const App = (props: any) => {
                     <Route path="/chat" element={<ChatApp />} />
                     <Route path="/foros" element={permissions ? <ForumListApp />: <Login />} />
                     <Route path="/foros2" element={permissions ? <ForumListApp2 /> : <Login />} />
+                    <Route path="/biblioteca" element={permissions ? <ForumListApp2 /> : <Login />} />
+                    <Route path="/bibliotecas" element={permissions ? <CustomVideoTutorials /> : <Login />} />
                     <Route path="/forumList" element={permissions ? <ForumListApp /> : <Login />} />
                     <Route path="/forum" element={permissions ? <ForumApp /> : <Login />} />
                     <Route path="/foro-detalle" element={<ForumApp />} />

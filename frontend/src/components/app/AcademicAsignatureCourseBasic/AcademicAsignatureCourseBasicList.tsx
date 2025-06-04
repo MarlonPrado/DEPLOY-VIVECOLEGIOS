@@ -200,6 +200,11 @@ const AcademicAsignatureCourseBasicList = (props: any) => {
           `/spreadsheetRecoveryPlan?gradeId=${item?.course?.academicGradeId}&gradeName=${item?.course?.academicGrade?.name}&courseName=${item?.course?.name}&courseId=${item?.course?.id}&academicAsignatureCourseId=${item?.id}&asignatureId=${item.academicAsignatureId}&asignatureName=${item.academicAsignature?.name}&academicAsignatureCourseId=${item?.id}`,
         );
         break;;
+      case 'goToLibrary':
+        goToChildren(
+          `/bibliotecas?schoolId=${props?.loginReducer?.schoolId}&courseId=${item?.course?.id}&courseName=${item?.course?.name}&academicAsignatureCourseId=${item?.id}&asignatureId=${item.academicAsignatureId}&asignatureName=${item.academicAsignature?.name}`
+        );
+        break;
       default:
         break;
     }
@@ -301,6 +306,13 @@ const AcademicAsignatureCourseBasicList = (props: any) => {
                 color: 'primary',
                 icon: 'iconsminds-speach-bubble-dialog',
                 action: 'goToForums',
+              },
+              {
+                id: 6,
+                label: 'Mi Biblioteca',
+                color: 'success',
+                icon: 'iconsminds-book',
+                action: 'goToLibrary',
               },
             ]}
             withChildren={true}
