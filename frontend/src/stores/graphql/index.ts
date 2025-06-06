@@ -2,6 +2,7 @@ import { ApolloClient, createHttpLink, InMemoryCache } from '@apollo/client';
 import { setContext } from '@apollo/client/link/context';
 import { createUploadLink } from 'apollo-upload-client';
 
+// Conexiones al servidor donde se define la URL del servidor GraphQL que apunta para desarrollo.
 const uri = 'http://localhost:4000/graphql';
 //const uri = 'http://10.3.141.1:4000/graphql';
 //const uri = 'http://200.116.210.27:4000/graphql';
@@ -15,6 +16,8 @@ const httpLink = createHttpLink({
 const httpLink2 = createUploadLink({
   uri,
 });
+
+// Se intercepta todas las solicitudes para añadir al toke de autotenticación.
 
 const authLink = setContext((_, { headers }) => {
   const token = localStorage.getItem('token');
@@ -54,6 +57,7 @@ const authLinkUpload = setContext((_, { headers }) => {
   } ;
 });
 
+// Cliente estándar para operaciones normales.
 
 export const client = new ApolloClient({
   link: authLink.concat(httpLink),
@@ -75,6 +79,7 @@ export const client = new ApolloClient({
   assumeImmutableResults: true,
 });
 
+// Cliente especializado para subida de archivos.
 
 export const clientUpload = new ApolloClient({
   link: authLinkUpload.concat(httpLink2 as any) as any,
