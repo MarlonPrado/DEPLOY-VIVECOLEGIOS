@@ -45,7 +45,8 @@ Sistema completo para la gestión académica de instituciones educativas, desarr
 - Tomo II - Componente Backend https://drive.google.com/file/d/1xhgwSNqWa4-ohSTKxfrM5KL1FUZismZx/view?usp=sharing 
 - Tomo III - Componente FrontEnd Parte 1 https://drive.google.com/file/d/1eQJ_DlTB8-ry7P_v4Lcw5S0zQT695q4i/view?usp=sharing
 - Tomo III - Componente FrontEnd Parte 2 https://drive.google.com/file/d/1Kr4f9pU6ASzU61pIbAQmSNUvlwww3ARk/view?usp=sharing
-- Tomo IV - Operabilidad y Despliegue https://drive.google.com/file/d/1uOvaEf5uNJmK0BZgSYH1El1VaAsPv9-H/view?usp=sharing
+- Tomo IV - Operabilidad y Despliegue Frontend https://drive.google.com/file/d/1uOvaEf5uNJmK0BZgSYH1El1VaAsPv9-H/view?usp=sharing
+- Tomo IV - Operabilidad y Despliegue Backend https://drive.google.com/file/d/1MI5SfV_arnW03aWf8jPe-8og0rpeIzXc/view?usp=sharing
 
 ---
 
