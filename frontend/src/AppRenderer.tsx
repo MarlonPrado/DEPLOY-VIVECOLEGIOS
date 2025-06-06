@@ -6,6 +6,9 @@ import { PersistGate } from 'redux-persist/integration/react';
 import App from './routes/App';
 import configureStore from './stores/configureStore';
 
+// Configuración de Redux en donde se inicializa el store para la gestión del estado global.
+// Configura el persitor para mantener ciertos datos entre sesiones.
+
 // const App = React.lazy(()=> {return import(/* webpackChunkName: "App" */ './routes/App')})
 const { store, persistor } = configureStore();
 const container = document.getElementById('app');
@@ -15,6 +18,7 @@ const root = ReactDOMClient.createRoot(container);
 import * as serviceWorkerRegistration from './serviceWorkerRegistration';
 import reportWebVitals from './reportWebVitals';
 
+// Jerarquía de providers
 root.render(
   <Provider store={store}>
     <PersistGate persistor={persistor}>

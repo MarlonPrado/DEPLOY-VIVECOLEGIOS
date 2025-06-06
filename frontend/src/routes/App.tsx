@@ -782,6 +782,9 @@ const App = (props: any) => {
 
   const [permissions, setPermissions] = useState(false);
 
+  // Control de acceso donde se verifica la autenticación del usuario mediante tokens.
+  // Redirige al login cuando no hay autenticación.
+
   useLayoutEffect(() => {
     const token = localStorage.getItem('token');
     if (props?.loginReducer?.userId?.length > 0 && token != null) {
@@ -791,6 +794,7 @@ const App = (props: any) => {
     }
   }, [props.loginReducer]);
 
+  // Sistema de rutas completo donde se define todas las páginas accesibles en la aplicación.
   return (
     <div className="h-100">
       <IntlProvider locale={currentAppLocale.locale} messages={currentAppLocale.messages}>
@@ -997,6 +1001,7 @@ const App = (props: any) => {
                     />
                     {/* ACADEMIC */}
 
+                    {/* Implementa protección de rutas basada en autenticación */}                    
                     {/* APPLICATIONS */}
                     {/* forumList puede ser el futuro forumlist para estudiantes */}
                     <Route path="/chat" element={<ChatApp />} />

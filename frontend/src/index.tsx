@@ -1,3 +1,6 @@
+// Este es el punto de entrada en el que se realiza la configuración del tema y el color, la carga de los
+// estilos CSS y el renderizado dinámico basado en el tema.
+
 import { defaultColor, isDarkSwitchActive, isMultiColorActive } from './constants/defaultValues';
 import { getCurrentColor, setCurrentColor } from './helpers/Utils';
 
@@ -25,19 +28,3 @@ const render = () => {
   });
 };
 render();
-
-// If you want your app to work offline and load faster, you can change
-// unregister() to register() below. Note this comes with some pitfalls. a
-// Learn more about service workers: https://cra.link/PWA
-// serviceWorkerRegistration.register(); //change the service worker registration from 'unregistered' to 'registered'
-
-// if ('serviceWorker' in navigator) {
-//   window.addEventListener('load', () => {
-//     navigator.serviceWorker.register('/service-worker.js')
-//       .then(registration => {
-//         console.log('SW registered: ', registration);
-//       }).catch(registrationError => {
-//         console.log('SW registration failed: ', registrationError);
-//       });
-//   });
-// }
