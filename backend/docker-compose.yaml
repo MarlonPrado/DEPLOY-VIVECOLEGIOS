@@ -1,11 +1,13 @@
-version: '3'
+version: '3.8'
 
 services:
-  mongodb:
-    image: mongo
-    restart: always
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: db_user_vivecolegios
-      MONGO_INITDB_ROOT_PASSWORD: db_user_vivecolegios2021
+  app:
+    build: .
     ports:
-      - 27017:27017
+      - "${PORT_1}:4000" 
+    volumes:
+      - .:/app
+      - /app/node_modules
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+    command: yarn start
