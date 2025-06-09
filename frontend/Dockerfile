@@ -1,19 +1,18 @@
-# build environment
-FROM node:18.20.4 as build
+# Usa una imagen oficial de Node
+FROM node:18.20.4
+
+# Crea una carpeta dentro del contenedor
 WORKDIR /app
-ENV PATH /app/node_modules/.bin:$PATH
+
+# Copia los archivos del proyecto
+COPY package.json yarn.lock ./
 COPY . .
+
+# Instala dependencias
 RUN yarn install
-RUN yarn run prebuild
-RUN yarn run build:prod
-#RUN npm prune --production
 
-# production environment
-FROM nginx:stable
-COPY --from=build /app/dist /usr/share/nginx/html
-# new
-COPY nginx/nginx.conf /etc/nginx/conf.d/default.conf
-COPY nginx/ssl/vivecolegios/* /etc/ssl/certs/vivecolegios/
+# Expone el puerto que usa 
+EXPOSE 3000
 
-EXPOSE 80 443
-CMD ["nginx", "-g", "daemon off;"]
+# Comando para iniciar 
+CMD ["yarn", "run", "run:dev"]
