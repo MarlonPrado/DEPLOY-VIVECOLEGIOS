@@ -80,8 +80,8 @@ npm start
 
 | Parte     | URL |
 |-----------|-----|
-| Frontend  | https://vivecolegiosufps.cloud |
-| Backend   | https://backendrepo-w6bs.onrender.com |
+| Frontend  | https://deploy-vivecolegios-1.onrender.com |
+| Backend   | https://deploy-vivecolegios.onrender.com |
 
 > ⚠️ Es posible que el servicio se pause temporalmente por inactividad, esperar 2-5 min para inicializacion de parte del servidor
 ---
