@@ -19,6 +19,7 @@ module.exports = {
     port: 3000,
     // hotOnly: true,
     historyApiFallback: true,
+    allowedHosts: "all",
   },
   optimization: {
     concatenateModules: false,
