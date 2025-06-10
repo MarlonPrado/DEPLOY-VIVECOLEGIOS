@@ -76,6 +76,15 @@ npm start
 
 ---
 
+
+## 🐱‍👤Credenciales del Sistema
+
+```bash
+usuario:SOP2VIVECOLEGIOS
+clave:123456xxx :D revisar anexos
+```
+
+
 ## 🌐 URL de Despliegue
 
 | Parte     | URL |
