@@ -9,7 +9,7 @@ module.exports = {
   output: {
     path: path.resolve(__dirname, 'dist'),
     filename: 'js/[id].js',
-    publicPath: 'http://localhost:3000/',
+    publicPath: 'auto',
     chunkFilename: 'js/[id].[chunkhash].js',
   },
   devServer: {
