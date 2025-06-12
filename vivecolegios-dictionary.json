@@ -1,0 +1,992 @@
+{
+  "models": {
+    "CampusAdministrator": {
+      "AcademicAreaCoursePeriodValuation": {
+        "description": "The AcademicAreaCoursePeriodValuation model",
+        "properties": {
+          "academicAreaId": "academicAreaId",
+          "academicPeriodId": "academicPeriodId",
+          "studentId": "studentId",
+          "assessment": "assessment",
+          "performanceLevelId": "performanceLevelId"
+        },
+        "relationships": []
+      },
+      "AcademicAreaCourseYearValuation": {
+        "description": "The AcademicAreaCourseYearValuation model",
+        "properties": {
+          "academicAreaId": "academicAreaId",
+          "schoolYearId": "schoolYearId",
+          "studentId": "studentId",
+          "assessment": "assessment",
+          "performanceLevelId": "performanceLevelId"
+        },
+        "relationships": []
+      },
+      "AcademicAsignatureCourse": {
+        "description": "The AcademicAsignatureCourse model",
+        "properties": {
+          "hourlyIntensity": "hourlyIntensity",
+          "academicAsignatureId": "academicAsignatureId",
+          "courseId": "courseId",
+          "weight": "weight",
+          "teacherId": "teacherId",
+          "gradeAssignmentId": "gradeAssignmentId",
+          "schoolYearId": "schoolYearId",
+          "entityBaseId": "entityBaseId"
+        },
+        "relationships": []
+      },
+      "AcademicAsignatureCoursePeriodEvidenceLearningValuation": {
+        "description": "The AcademicAsignatureCoursePeriodEvidenceLearningValuation model",
+        "properties": {
+          "evidenceLearningId": "evidenceLearningId",
+          "academicAsignatureCourseId": "academicAsignatureCourseId",
+          "academicPeriodId": "academicPeriodId",
+          "studentId": "studentId",
+          "assessment": "assessment",
+          "performanceLevelId": "performanceLevelId"
+        },
+        "relationships": []
+      },
+      "AcademicAsignatureCoursePeriodValuation": {
+        "description": "The AcademicAsignatureCoursePeriodValuation model",
+        "properties": {
+          "academicAsignatureCourseId": "academicAsignatureCourseId",
+          "academicPeriodId": "academicPeriodId",
+          "studentId": "studentId",
+          "assessment": "assessment",
+          "performanceLevelId": "performanceLevelId"
+        },
+        "relationships": []
+      },
+      "AcademicAsignatureCourseYearValuation": {
+        "description": "The AcademicAsignatureCourseYearValuation model",
+        "properties": {
+          "academicAsignatureCourseId": "academicAsignatureCourseId",
+          "schoolYearId": "schoolYearId",
+          "studentId": "studentId",
+          "assessment": "assessment",
+          "performanceLevelId": "performanceLevelId"
+        },
+        "relationships": []
+      },
+      "AcademicDay": {
+        "description": "The AcademicDay model",
+        "properties": {
+          "name": "name",
+          "nameSIMAT": "nameSIMAT",
+          "schoolYearId": "schoolYearId",
+          "entityBaseId": "entityBaseId"
+        },
+        "relationships": []
+      },
+      "AcademicHour": {
+        "description": "The AcademicHour model",
+        "properties": {
+          "academicDayId": "academicDayId",
+          "startTime": "startTime",
+          "endTime": "endTime",
+          "order": "order",
+          "schoolYearId": "schoolYearId",
+          "entityBaseId": "entityBaseId"
+        },
+        "relationships": []
+      },
+      "AcademicSchedule": {
+        "description": "The AcademicSchedule model",
+        "properties": {
+          "academicAsignatureCourseId": "academicAsignatureCourseId",
+          "courseId": "courseId",
+          "teacherId": "teacherId",
+          "startAcademicHourId": "startAcademicHourId",
+          "endAcademicHourId": "endAcademicHourId",
+          "day": "day"
+        },
+        "relationships": []
+      },
+      "AverageAcademicPeriodCourse": {
+        "description": "The AverageAcademicPeriodCourse model",
+        "properties": {
+          "academicPeriodId": "academicPeriodId",
+          "courseId": "courseId",
+          "assessment": "assessment",
+          "performanceLevelId": "performanceLevelId"
+        },
+        "relationships": []
+      },
+      "AverageAcademicPeriodStudent": {
+        "description": "The AverageAcademicPeriodStudent model",
+        "properties": {
+          "academicPeriodId": "academicPeriodId",
+          "courseId": "courseId",
+          "studentId": "studentId",
+          "assessment": "assessment",
+          "performanceLevelId": "performanceLevelId",
+          "score": "score"
+        },
+        "relationships": []
+      },
+      "AverageAcademicYearCourse": {
+        "description": "The AverageAcademicYearCourse model",
+        "properties": {
+          "schoolYearId": "schoolYearId",
+          "courseId": "courseId",
+          "assessment": "assessment",
+          "performanceLevelId": "performanceLevelId"
+        },
+        "relationships": []
+      },
+      "AverageAcademicYearStudent": {
+        "description": "The AverageAcademicYearStudent model",
+        "properties": {
+          "schoolYearId": "schoolYearId",
+          "courseId": "courseId",
+          "studentId": "studentId",
+          "assessment": "assessment",
+          "performanceLevelId": "performanceLevelId",
+          "score": "score",
+          "promoted": "promoted"
+        },
+        "relationships": []
+      },
+      "ClassroomPlan": {
+        "description": "The ClassroomPlan model",
+        "properties": {
+          "startDate": "startDate",
+          "endDate": "endDate",
+          "academicPeriodId": "academicPeriodId",
+          "academicAsignatureId": "academicAsignatureId",
+          "academicGradeId": "academicGradeId",
+          "academicAsignatureCourseId": "academicAsignatureCourseId"
+        },
+        "relationships": []
+      },
+      "Course": {
+        "description": "The Course model",
+        "properties": {
+          "academicGradeId": "academicGradeId",
+          "academicDayId": "academicDayId",
+          "name": "name",
+          "order": "order",
+          "teacherId": "teacherId",
+          "jornadaSIMAT": "jornadaSIMAT",
+          "gradoCodSIMAT": "gradoCodSIMAT",
+          "grupoSIMAT": "grupoSIMAT",
+          "schoolYearId": "schoolYearId",
+          "entityBaseId": "entityBaseId"
+        },
+        "relationships": []
+      },
+      "ExperienceLearning": {
+        "description": "The ExperienceLearning model",
+        "properties": {
+          "title": "title",
+          "academicAsignatureCourseId": "academicAsignatureCourseId",
+          "description": "description",
+          "dateDelivery": "dateDelivery",
+          "academicPeriodId": "academicPeriodId",
+          "onlineDelivery": "onlineDelivery",
+          "criteria": "criteria",
+          "openTestDate": "openTestDate",
+          "closeTestDate": "closeTestDate",
+          "shuffleQuestions": "shuffleQuestions"
+        },
+        "relationships": []
+      },
+      "ExperienceLearningAverageValuation": {
+        "description": "The ExperienceLearningAverageValuation model",
+        "properties": {
+          "academicAsignatureCourseId": "academicAsignatureCourseId",
+          "academicPeriodId": "academicPeriodId",
+          "studentId": "studentId",
+          "average": "average",
+          "evaluativeComponentId": "evaluativeComponentId",
+          "performanceLevelId": "performanceLevelId"
+        },
+        "relationships": []
+      },
+      "ExperienceLearningCoEvaluation": {
+        "description": "The ExperienceLearningCoEvaluation model",
+        "properties": {
+          "experienceLearningId": "experienceLearningId",
+          "coEvaluatorId": "coEvaluatorId",
+          "studentId": "studentId",
+          "assessment": "assessment",
+          "observations": "observations",
+          "performanceLevelId": "performanceLevelId"
+        },
+        "relationships": []
+      },
+      "ExperienceLearningCoEvaluationValuation": {
+        "description": "The ExperienceLearningCoEvaluationValuation model",
+        "properties": {
+          "experienceLearningId": "experienceLearningId",
+          "studentId": "studentId",
+          "assessment": "assessment",
+          "performanceLevelId": "performanceLevelId"
+        },
+        "relationships": []
+      },
+      "ExperienceLearningRubricCriteria": {
+        "description": "The ExperienceLearningRubricCriteria model",
+        "properties": {
+          "experienceLearningId": "experienceLearningId",
+          "evidenceLearningId": "evidenceLearningId",
+          "weight": "weight",
+          "criteria": "criteria"
+        },
+        "relationships": []
+      },
+      "ExperienceLearningRubricCriteriaValuation": {
+        "description": "The ExperienceLearningRubricCriteriaValuation model",
+        "properties": {
+          "experienceLearningRubricCriteriaId": "experienceLearningRubricCriteriaId",
+          "studentId": "studentId",
+          "assessment": "assessment",
+          "performanceLevelId": "performanceLevelId"
+        },
+        "relationships": []
+      },
+      "ExperienceLearningRubricValuation": {
+        "description": "The ExperienceLearningRubricValuation model",
+        "properties": {
+          "experienceLearningId": "experienceLearningId",
+          "studentId": "studentId",
+          "assessment": "assessment",
+          "observations": "observations",
+          "performanceLevelId": "performanceLevelId"
+        },
+        "relationships": []
+      },
+      "ExperienceLearningSelfAssessmentValuation": {
+        "description": "The ExperienceLearningSelfAssessmentValuation model",
+        "properties": {
+          "experienceLearningId": "experienceLearningId",
+          "studentId": "studentId",
+          "assessment": "assessment",
+          "observations": "observations",
+          "performanceLevelId": "performanceLevelId"
+        },
+        "relationships": []
+      },
+      "ExperienceLearningTraditionalValuation": {
+        "description": "The ExperienceLearningTraditionalValuation model",
+        "properties": {
+          "experienceLearningId": "experienceLearningId",
+          "studentId": "studentId",
+          "assessment": "assessment",
+          "performanceLevelId": "performanceLevelId"
+        },
+        "relationships": []
+      },
+      "Forum": {
+        "description": "The Forum model",
+        "properties": {
+          "name": "name",
+          "description": "description",
+          "details": "details",
+          "academicAsignatureCourseId": "academicAsignatureCourseId",
+          "schoolYearId": "schoolYearId"
+        },
+        "relationships": []
+      },
+      "ForumInteraction": {
+        "description": "The ForumInteraction model",
+        "properties": {
+          "comment": "comment",
+          "forumId": "forumId",
+          "schoolYearId": "schoolYearId"
+        },
+        "relationships": []
+      },
+      "ForumQuestion": {
+        "description": "The ForumQuestionQuestion model",
+        "properties": {
+          "name": "name",
+          "description": "description",
+          "details": "details",
+          "schoolYearId": "schoolYearId"
+        },
+        "relationships": []
+      },
+      "Guardian": {
+        "description": "The Guardian model",
+        "properties": {
+          "userId": "userId"
+        },
+        "relationships": []
+      },
+      "QuestionBankTestOnline": {
+        "description": "The QuestionBankTestOnline model",
+        "properties": {
+          "academicAsignatureId": "academicAsignatureId",
+          "academicGradeId": "academicGradeId",
+          "teacherId": "teacherId"
+        },
+        "relationships": []
+      },
+      "QuestionCategoryTestOnline": {
+        "description": "The QuestionCategoryTestOnline model",
+        "properties": {
+          "questionBankTestOnlineId": "questionBankTestOnlineId",
+          "name": "name",
+          "description": "description"
+        },
+        "relationships": []
+      },
+      "QuestionTestOnline": {
+        "description": "The QuestionTestOnline model",
+        "properties": {
+          "questionCategoryTestOnlineId": "questionCategoryTestOnlineId",
+          "name": "name",
+          "statement": "statement"
+        },
+        "relationships": []
+      },
+      "StudentAttendance": {
+        "description": "The StudentAttendance model",
+        "properties": {
+          "academicAsignatureCourseId": "academicAsignatureCourseId",
+          "academicPeriodId": "academicPeriodId",
+          "studentId": "studentId",
+          "day": "day"
+        },
+        "relationships": []
+      },
+      "StudentBehaviour": {
+        "description": "The StudentBehaviour model",
+        "properties": {
+          "courseId": "courseId",
+          "academicPeriodId": "academicPeriodId",
+          "studentId": "studentId",
+          "assessment": "assessment",
+          "performanceLevelId": "performanceLevelId",
+          "observation": "observation"
+        },
+        "relationships": []
+      },
+      "StudentObserverAnnotation": {
+        "description": "The StudentObserverAnnotation model",
+        "properties": {
+          "courseId": "courseId",
+          "academicPeriodId": "academicPeriodId",
+          "studentId": "studentId",
+          "observerAnnotationTypeId": "observerAnnotationTypeId",
+          "observation": "observation",
+          "commitment": "commitment"
+        },
+        "relationships": []
+      },
+      "StudentYearBehaviour": {
+        "description": "The StudentYearBehaviour model",
+        "properties": {
+          "courseId": "courseId",
+          "schoolYearId": "schoolYearId",
+          "studentId": "studentId",
+          "assessment": "assessment",
+          "performanceLevelId": "performanceLevelId",
+          "observation": "observation"
+        },
+        "relationships": []
+      },
+      "Teacher": {
+        "description": "Docente que imparte clases en una o varias asignaturas",
+        "properties": {
+          "userId": "userId",
+          "attentionSchedule": "attentionSchedule",
+          "entityBaseId": "entityBaseId",
+          "specialtyIds": "Lista de especialidades o áreas de experticia del docente"
+        },
+        "relationships": []
+      }
+    },
+    "Data": {
+      "Cursos": {
+        "description": "The Cursos model",
+        "properties": {
+          "dane": "dane",
+          "consecutivo": "consecutivo",
+          "jornada": "jornada",
+          "grado_cod": "grado_cod",
+          "grupo": "grupo"
+        },
+        "relationships": []
+      },
+      "Estudiantes": {
+        "description": "The Estudiantes model",
+        "properties": {
+          "dane": "dane",
+          "consecutivo": "consecutivo",
+          "jornada": "jornada",
+          "grado_cod": "grado_cod",
+          "grupo": "grupo",
+          "doc": "doc",
+          "tipodoc": "tipodoc",
+          "apellido1": "apellido1",
+          "apellido2": "apellido2",
+          "nombre1": "nombre1",
+          "nombre2": "nombre2",
+          "genero": "genero",
+          "fecha_nacimiento": "fecha_nacimiento",
+          "procesado": "procesado"
+        },
+        "relationships": []
+      },
+      "Jornadas": {
+        "description": "The Jornadas model",
+        "properties": {
+          "dane": "dane",
+          "consecutivo": "consecutivo",
+          "jornada": "jornada"
+        },
+        "relationships": []
+      },
+      "PlantaDocente": {
+        "description": "The PlantaDocente model",
+        "properties": {
+          "documento": "documento",
+          "empleado": "empleado",
+          "cargo": "cargo",
+          "municipio": "municipio",
+          "school_id": "school_id",
+          "sede_dane": "sede_dane",
+          "fechanacimiento": "fechanacimiento",
+          "sexo": "sexo",
+          "telefono": "telefono",
+          "email": "email",
+          "direccion": "direccion",
+          "procesado": "procesado"
+        },
+        "relationships": []
+      }
+    },
+    "GeneralAdministrator": {
+      "AuditLogin": {
+        "description": "The AuditLogin model",
+        "properties": {
+          "userId": "userId",
+          "username": "username",
+          "ip": "ip",
+          "geo": "geo",
+          "browser": "browser",
+          "language": "language",
+          "ipware": "ipware",
+          "ipwarePublic": "ipwarePublic",
+          "auth": "auth"
+        },
+        "relationships": []
+      },
+      "Campus": {
+        "description": "The Campus model",
+        "properties": {
+          "name": "name",
+          "daneCodeCampus": "daneCodeCampus",
+          "consecutive": "consecutive",
+          "schoolId": "schoolId"
+        },
+        "relationships": []
+      },
+      "DocumentType": {
+        "description": "The Document Type model",
+        "properties": {
+          "code": "code",
+          "name": "name",
+          "description": "description"
+        },
+        "relationships": []
+      },
+      "Email": {
+        "description": "The Email model",
+        "properties": {
+          "toId": "toId",
+          "email": "email",
+          "title": "title",
+          "message": "message",
+          "dateSend": "dateSend"
+        },
+        "relationships": []
+      },
+      "FrecuentQuestion": {
+        "description": "The FrecuentQuestion model",
+        "properties": {
+          "question": "question",
+          "response": "response",
+          "order": "order"
+        },
+        "relationships": []
+      },
+      "Gender": {
+        "description": "The Gender model",
+        "properties": {
+          "code": "code",
+          "name": "name",
+          "description": "description"
+        },
+        "relationships": []
+      },
+      "GeneralAcademicArea": {
+        "description": "The GeneralAcademicArea model",
+        "properties": {
+          "name": "name",
+          "hasStandard": "hasStandard",
+          "hasDba": "hasDba"
+        },
+        "relationships": []
+      },
+      "GeneralAcademicAsignature": {
+        "description": "The GeneralAcademicAsignature model",
+        "properties": {
+          "name": "name",
+          "generalAcademicAreaId": "generalAcademicAreaId",
+          "hasStandard": "hasStandard",
+          "hasDba": "hasDba"
+        },
+        "relationships": []
+      },
+      "GeneralAcademicCycle": {
+        "description": "The GeneralAcademicCycle model",
+        "properties": {
+          "name": "name"
+        },
+        "relationships": []
+      },
+      "GeneralAcademicGrade": {
+        "description": "The GeneralAcademicGrade model",
+        "properties": {
+          "name": "name",
+          "generalAcademicCycleId": "generalAcademicCycleId",
+          "nextGeneralAcademicGradeId": "nextGeneralAcademicGradeId",
+          "previousGeneralAcademicGradeId": "previousGeneralAcademicGradeId"
+        },
+        "relationships": []
+      },
+      "GeneralAcademicStandard": {
+        "description": "The GeneralAcademicStandard model",
+        "properties": {
+          "standard": "standard",
+          "type": "type",
+          "subtype": "subtype",
+          "generalAcademicAsignatureId": "generalAcademicAsignatureId",
+          "generalAcademicCycleId": "generalAcademicCycleId"
+        },
+        "relationships": []
+      },
+      "GeneralBasicLearningRight": {
+        "description": "The GeneralBasicLearningRight model",
+        "properties": {
+          "dba": "dba",
+          "category": "category",
+          "generalAcademicAsignatureId": "generalAcademicAsignatureId",
+          "generalAcademicGradeId": "generalAcademicGradeId"
+        },
+        "relationships": []
+      },
+      "GeneralPerformanceLevel": {
+        "description": "The GeneralPerformanceLevel model",
+        "properties": {
+          "name": "name"
+        },
+        "relationships": []
+      },
+      "Inbox": {
+        "description": "The Inbox model",
+        "properties": {
+          "userId": "userId",
+          "fromId": "fromId",
+          "title": "title",
+          "message": "message",
+          "dateSend": "dateSend",
+          "dateRead": "dateRead"
+        },
+        "relationships": []
+      },
+      "Menu": {
+        "description": "The Menu model",
+        "properties": {
+          "name": "name",
+          "icon": "icon",
+          "order": "order",
+          "moduleId": "moduleId",
+          "createAction": "createAction",
+          "deleteAction": "deleteAction",
+          "updateAction": "updateAction",
+          "readAction": "readAction",
+          "fullAccess": "fullAccess",
+          "activateAction": "activateAction",
+          "inactiveAction": "inactiveAction",
+          "isHidden": "isHidden"
+        },
+        "relationships": []
+      },
+      "MenuItem": {
+        "description": "The MenuItem model",
+        "properties": {
+          "name": "name",
+          "icon": "icon",
+          "order": "order",
+          "menuId": "menuId",
+          "moduleId": "moduleId",
+          "createAction": "createAction",
+          "deleteAction": "deleteAction",
+          "updateAction": "updateAction",
+          "readAction": "readAction",
+          "fullAccess": "fullAccess",
+          "activateAction": "activateAction",
+          "inactiveAction": "inactiveAction",
+          "isHidden": "isHidden"
+        },
+        "relationships": []
+      },
+      "Module": {
+        "description": "The Module model",
+        "properties": {
+          "name": "name",
+          "url": "url"
+        },
+        "relationships": []
+      },
+      "Municipality": {
+        "description": "The Municipality model",
+        "properties": {
+          "name": "name"
+        },
+        "relationships": []
+      },
+      "Notification": {
+        "description": "The Notification model",
+        "properties": {
+          "userId": "userId",
+          "title": "title",
+          "message": "message",
+          "dateSend": "dateSend",
+          "dateRead": "dateRead"
+        },
+        "relationships": []
+      },
+      "Role": {
+        "description": "The Role model",
+        "properties": {
+          "name": "name",
+          "isSchoolAdministrator": "isSchoolAdministrator",
+          "isSchoolAdministrative": "isSchoolAdministrative",
+          "isCampusAdministrator": "isCampusAdministrator",
+          "isCampusCoordinator": "isCampusCoordinator",
+          "isStudent": "isStudent",
+          "isTeacher": "isTeacher",
+          "isGuardian": "isGuardian"
+        },
+        "relationships": []
+      },
+      "School": {
+        "description": "The School model",
+        "properties": {
+          "name": "name",
+          "daneCode": "daneCode",
+          "pedagogicalModel": "pedagogicalModel",
+          "educationalModel": "educationalModel",
+          "curricularComponent": "curricularComponent",
+          "textResolution": "textResolution",
+          "textAddress": "textAddress",
+          "textDaneNit": "textDaneNit",
+          "logo": "logo",
+          "textPrincipalSignature": "textPrincipalSignature",
+          "textSecretarySignature": "textSecretarySignature",
+          "imgPrincipalSignature": "imgPrincipalSignature",
+          "imgSecretarySignature": "imgSecretarySignature"
+        },
+        "relationships": []
+      },
+      "SchoolAdministrative": {
+        "description": "The SchoolAdministrative model",
+        "properties": {
+          "userId": "userId",
+          "user": "user"
+        },
+        "relationships": []
+      },
+      "SchoolAdministrator": {
+        "description": "The SchoolAdministrator model",
+        "properties": {
+          "userId": "userId",
+          "user": "user",
+          "support": "support"
+        },
+        "relationships": []
+      },
+      "Student": {
+        "description": "Estudiante matriculado en una institución educativa con acceso al sistema",
+        "properties": {
+          "academicGradeId": "academicGradeId",
+          "courseId": "courseId",
+          "userId": "userId",
+          "code": "Código único de matrícula del estudiante en la institución",
+          "schoolYearId": "schoolYearId",
+          "entityBaseId": "entityBaseId",
+          "status": "Estado actual del estudiante (activo, retirado, graduado, etc.)"
+        },
+        "relationships": [],
+        "notes": "Los estudiantes pueden ser asignados a un solo curso por año escolar"
+      },
+      "User": {
+        "description": "The User model",
+        "properties": {
+          "active": "active",
+          "createdByUserId": "createdByUserId",
+          "updatedByUserId": "updatedByUserId",
+          "name": "name",
+          "lastName": "lastName",
+          "username": "username",
+          "genderId": "genderId",
+          "documentTypeId": "documentTypeId",
+          "documentNumber": "documentNumber",
+          "birthdate": "birthdate",
+          "phone": "phone",
+          "email": "email",
+          "password": "password",
+          "profilePhoto": "profilePhoto",
+          "signaturePhoto": "signaturePhoto",
+          "roleId": "roleId"
+        },
+        "relationships": []
+      },
+      "VideoTutorial": {
+        "description": "The VideoTutorial model",
+        "properties": {
+          "name": "name",
+          "description": "description",
+          "image": "image",
+          "miniumResolutionFileUrl": "miniumResolutionFileUrl",
+          "mediumResolutionFileUrl": "mediumResolutionFileUrl",
+          "maxResolutionFileUrl": "maxResolutionFileUrl",
+          "order": "order"
+        },
+        "relationships": []
+      }
+    },
+    "SchoolAdministrator": {
+      "AcademicArea": {
+        "description": "The AcademicArea model",
+        "properties": {
+          "name": "name",
+          "abbreviation": "abbreviation",
+          "generalAcademicAreaId": "generalAcademicAreaId",
+          "order": "order",
+          "isAverage": "isAverage",
+          "schoolYearId": "schoolYearId",
+          "entityBaseId": "entityBaseId"
+        },
+        "relationships": []
+      },
+      "AcademicAsignature": {
+        "description": "The AcademicAsignature model",
+        "properties": {
+          "name": "name",
+          "abbreviation": "abbreviation",
+          "code": "code",
+          "minWeight": "minWeight",
+          "maxWeight": "maxWeight",
+          "academicAreaId": "academicAreaId",
+          "generalAcademicAsignatureId": "generalAcademicAsignatureId",
+          "order": "order",
+          "schoolYearId": "schoolYearId",
+          "entityBaseId": "entityBaseId"
+        },
+        "relationships": []
+      },
+      "AcademicGrade": {
+        "description": "The AcademicGrade model",
+        "properties": {
+          "name": "name",
+          "educationLevelId": "educationLevelId",
+          "specialtyId": "specialtyId",
+          "generalAcademicCycleId": "generalAcademicCycleId",
+          "generalAcademicGradeId": "generalAcademicGradeId",
+          "schoolYearId": "schoolYearId",
+          "entityBaseId": "entityBaseId"
+        },
+        "relationships": []
+      },
+      "AcademicPeriod": {
+        "description": "The AcademicPeriod model",
+        "properties": {
+          "name": "name",
+          "schoolYearId": "schoolYearId",
+          "startDate": "startDate",
+          "endDate": "endDate",
+          "startDateRecovery": "startDateRecovery",
+          "endDateRecovery": "endDateRecovery",
+          "weight": "weight",
+          "order": "order",
+          "entityBaseId": "entityBaseId"
+        },
+        "relationships": []
+      },
+      "AcademicStandard": {
+        "description": "The AcademicStandard model",
+        "properties": {
+          "standard": "standard",
+          "generalAcademicStandardId": "generalAcademicStandardId",
+          "academicAsignatureId": "academicAsignatureId",
+          "academicGradeId": "academicGradeId"
+        },
+        "relationships": []
+      },
+      "CampusAdministrator": {
+        "description": "The CampusAdministrator model",
+        "properties": {
+          "userId": "userId"
+        },
+        "relationships": []
+      },
+      "CampusCoordinator": {
+        "description": "The CampusCoordinator model",
+        "properties": {
+          "userId": "userId"
+        },
+        "relationships": []
+      },
+      "EvaluativeComponent": {
+        "description": "The EvaluativeComponent model",
+        "properties": {
+          "name": "name",
+          "weight": "weight",
+          "schoolYearId": "schoolYearId",
+          "entityBaseId": "entityBaseId"
+        },
+        "relationships": []
+      },
+      "EvidenceLearning": {
+        "description": "The EvidenceLearning model",
+        "properties": {
+          "statement": "statement",
+          "learningId": "learningId"
+        },
+        "relationships": []
+      },
+      "GradeAssignment": {
+        "description": "The GradeAssignment model",
+        "properties": {
+          "minHourlyIntensity": "minHourlyIntensity",
+          "maxHourlyIntensity": "maxHourlyIntensity",
+          "academicGradeId": "academicGradeId",
+          "academicAsignatureId": "academicAsignatureId",
+          "schoolYearId": "schoolYearId",
+          "entityBaseId": "entityBaseId"
+        },
+        "relationships": []
+      },
+      "Learning": {
+        "description": "The Learning model",
+        "properties": {
+          "statement": "statement",
+          "academicAsignatureId": "academicAsignatureId",
+          "generalBasicLearningRightId": "generalBasicLearningRightId",
+          "academicStandardId": "academicStandardId",
+          "academicGradeId": "academicGradeId"
+        },
+        "relationships": []
+      },
+      "Modality": {
+        "description": "The Modality model",
+        "properties": {
+          "code": "code",
+          "name": "name",
+          "schoolYearId": "schoolYearId",
+          "entityBaseId": "entityBaseId"
+        },
+        "relationships": []
+      },
+      "ObserverAnnotationType": {
+        "description": "The ObserverAnnotationType model",
+        "properties": {
+          "code": "code",
+          "name": "name"
+        },
+        "relationships": []
+      },
+      "PerformanceLevel": {
+        "description": "The PerformanceLevel model",
+        "properties": {
+          "name": "name",
+          "minimumScore": "minimumScore",
+          "topScore": "topScore",
+          "abbreviation": "abbreviation",
+          "colorHex": "colorHex",
+          "isFinal": "isFinal",
+          "isRecovery": "isRecovery",
+          "generalPerformanceLevelId": "generalPerformanceLevelId",
+          "order": "order",
+          "schoolYearId": "schoolYearId",
+          "entityBaseId": "entityBaseId"
+        },
+        "relationships": []
+      },
+      "SchoolConfiguration": {
+        "description": "The SchoolConfiguration model",
+        "properties": {
+          "code": "code",
+          "valueNumber": "valueNumber",
+          "valueString": "valueString",
+          "schoolYearId": "schoolYearId",
+          "entityBaseId": "entityBaseId"
+        },
+        "relationships": []
+      },
+      "SchoolYear": {
+        "description": "The SchoolYear model",
+        "properties": {
+          "schoolYear": "schoolYear",
+          "startDate": "startDate",
+          "endDate": "endDate",
+          "folioNumber": "folioNumber",
+          "schoolYearImportId": "schoolYearImportId",
+          "schoolYearImportOptions": "schoolYearImportOptions"
+        },
+        "relationships": []
+      },
+      "Specialty": {
+        "description": "The Specialty model",
+        "properties": {
+          "code": "code",
+          "name": "name",
+          "modalityId": "modalityId",
+          "schoolYearId": "schoolYearId",
+          "entityBaseId": "entityBaseId"
+        },
+        "relationships": []
+      },
+      "SyncOffline": {
+        "description": "The SyncOffline model",
+        "properties": {
+          "schoolYearId": "schoolYearId",
+          "academicPeriodId": "academicPeriodId",
+          "startDate": "startDate",
+          "endDate": "endDate",
+          "finish": "finish"
+        },
+        "relationships": []
+      }
+    }
+  },
+  "constants": {
+    "experienceLearningType": {
+      "TRADITIONALVALUATION": "Evaluación tradicional",
+      "SELFAPPRAISAL": "Autoevaluación",
+      "COEVALUATION": "Coevaluación",
+      "ONLINETEST": "Prueba en línea"
+    },
+    "attendanceStatus": {
+      "PRESENT": "Estudiante presente en clase",
+      "ABSENT": "Ausencia sin justificación",
+      "JUSTIFIED": "Ausencia con justificación válida",
+      "LATE": "Llegada tarde a clase"
+    }
+  },
+  "endpoints": {
+    "graphql": {
+      "development": "http://localhost:4000/graphql",
+      "production": "https://backendrepo-w6bs.onrender.com/graphql"
+    }
+  }
+}

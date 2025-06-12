@@ -1,0 +1,26 @@
+{
+    "customModels": {
+        "Student": {
+            "description": "Estudiante matriculado en una institución educativa con acceso al sistema",
+            "properties": {
+                "code": "Código único de matrícula del estudiante en la institución",
+                "status": "Estado actual del estudiante (activo, retirado, graduado, etc.)"
+            },
+            "notes": "Los estudiantes pueden ser asignados a un solo curso por año escolar"
+        },
+        "Teacher": {
+            "description": "Docente que imparte clases en una o varias asignaturas",
+            "properties": {
+                "specialtyIds": "Lista de especialidades o áreas de experticia del docente"
+            }
+        }
+    },
+    "customConstants": {
+        "attendanceStatus": {
+            "PRESENT": "Estudiante presente en clase",
+            "ABSENT": "Ausencia sin justificación",
+            "JUSTIFIED": "Ausencia con justificación válida",
+            "LATE": "Llegada tarde a clase"
+        }
+    }
+}
