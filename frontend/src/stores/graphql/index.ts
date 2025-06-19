@@ -3,9 +3,9 @@ import { setContext } from '@apollo/client/link/context';
 import { createUploadLink } from 'apollo-upload-client';
 
 // Conexiones al servidor donde se define la URL del servidor GraphQL que apunta para desarrollo.
-//const uri = 'http://localhost:4000/graphql';
+const uri = 'http://localhost:4000/graphql';
 
-const uri = 'https://deploy-vivecolegios.onrender.com/graphql';
+//const uri = 'https://deploy-vivecolegios.onrender.com/graphql';
 
 //const uri = 'http://10.3.141.1:4000/graphql';
 //const uri = 'http://200.116.210.27:4000/graphql';
