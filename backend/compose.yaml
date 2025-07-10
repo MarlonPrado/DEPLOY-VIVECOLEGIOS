@@ -1,0 +1,14 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile-ufps
+    ports:
+      - '${PORT_0}:4000'
+    volumes:
+      - public:/app/public
+    env_file: .env
+    restart: always
+
+volumes:
+  public:

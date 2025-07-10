@@ -10,6 +10,7 @@ const ManifestPlugin = require('webpack-manifest-plugin');
 const WorkboxPlugin = require('workbox-webpack-plugin');
 const CopyPlugin = require('copy-webpack-plugin');
 const webpack = require('webpack');
+require('dotenv').config();
 
 module.exports = {
   entry: {
@@ -83,6 +84,7 @@ module.exports = {
       'process.env':{
         'NODE_ENV': JSON.stringify('production'),
         'PUBLIC_URL': JSON.stringify('http://vivecolegios.nortedesantander.gov.co'),
+        'GRAPHQL_API_ENDPOINT': JSON.stringify(process.env.GRAPHQL_API_ENDPOINT)
       },
     }),
     new MiniCssExtractPlugin({

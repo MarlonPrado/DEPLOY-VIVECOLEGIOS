@@ -18,7 +18,8 @@
       "es2015"
     ],
     "moduleResolution": "node",
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "typeRoots": [],
   },
   "awesomeTypescriptLoaderOptions": {
     "useWebpackText": true,

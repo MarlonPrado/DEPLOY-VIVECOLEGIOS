@@ -1,0 +1,25 @@
+FROM node:lts-alpine AS prod-deps
+WORKDIR /app
+COPY package.json yarn.lock ./
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium \
+    PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
+RUN apk add --no-cache chromium && \
+    yarn install --prod
+
+FROM prod-deps AS dev-deps
+WORKDIR /app
+RUN yarn install
+
+FROM dev-deps AS build
+WORKDIR /app
+COPY . .
+RUN yarn build
+
+FROM prod-deps AS production
+WORKDIR /app
+COPY --from=build /app/dist ./dist
+COPY --from=build /app/ssl ./ssl
+EXPOSE 4000
+ENV NODE_ENV=production
+VOLUME /app/public
+ENTRYPOINT [ "yarn", "start:prod" ]

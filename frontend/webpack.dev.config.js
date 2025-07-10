@@ -9,7 +9,7 @@ module.exports = {
   output: {
     path: path.resolve(__dirname, 'dist'),
     filename: 'js/[id].js',
-    publicPath: 'auto',
+    publicPath: 'http://localhost:3000/',
     chunkFilename: 'js/[id].[chunkhash].js',
   },
   devServer: {
@@ -19,7 +19,6 @@ module.exports = {
     port: 3000,
     // hotOnly: true,
     historyApiFallback: true,
-    allowedHosts: "all",
   },
   optimization: {
     concatenateModules: false,

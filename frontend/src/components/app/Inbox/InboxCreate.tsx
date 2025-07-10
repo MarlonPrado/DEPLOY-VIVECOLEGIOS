@@ -18,6 +18,7 @@ const InboxCreate = (props: any) => {
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  
   // Estados para campos de formulario
   const [title, setTitle] = useState('');
   const [message, setMessage] = useState('');
@@ -36,7 +37,9 @@ const InboxCreate = (props: any) => {
       setSelectedUser(null);
       setSelectedCourse(null);
     }
-  };  // Limpiar formulario
+  };
+
+  // Limpiar formulario
   const cleanForm = () => {
     setSelectedUser(null);
     setSelectedCourse(null);
@@ -97,40 +100,6 @@ const InboxCreate = (props: any) => {
     } finally {
       setLoadingUsers(false);
       setLoadingCourses(false);
-    }  };  // Función simple para enviar WhatsApp
-  const sendWhatsApp = async () => {
-    try {
-      console.log('Enviando Hello World por WhatsApp a 573115702122');
-      
-      const response = await fetch('https://graph.facebook.com/v22.0/559097113963605/messages', {
-        method: 'POST',
-        headers: {
-          'Authorization': 'Bearer EAAULntKQgDsBO6ZAMsBNuc4uwWmgAnqS897ZAiJtiWsyeDy10UJXZCBqrLEDMutzjoFnvcrxHZAs9K0ZAkgRRqdfYTCvHQdZBi5beNU1AfVDqz3qfQYSQpirqueZAXxK1AuGmCIPaCjM0G0P5UeZBSWmaMIIfdHXvRnEuMtpZCI5ZCZC1OC7ZA2S94Qc1SZCf4ZAAZCWUpimAZDZD',
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          messaging_product: 'whatsapp',
-          to: '573115702122',
-          type: 'template',
-          template: {
-            name: 'hello_world',
-            language: {
-              code: 'en_US'
-            }
-          }
-        })
-      });
-
-      const result = await response.json();
-      
-      if (response.ok) {
-        console.log('Hello World WhatsApp enviado exitosamente:', result);
-      } else {
-        console.error('Error en WhatsApp:', result);
-      }
-      
-    } catch (error) {
-      console.error('Error enviando WhatsApp:', error);
     }
   };
 
@@ -199,12 +168,11 @@ const InboxCreate = (props: any) => {
           };
           break;
       }
-        console.log(`Enviando mensaje desde pestaña ${activeTab}:`, formData);      // Llamada al backend
-      await props.onSubmit(formData);
       
-      // Enviar SIEMPRE automáticamente Hello World por WhatsApp
-      console.log('Enviando Hello World automáticamente por WhatsApp...');
-      await sendWhatsApp();
+      console.log(`Enviando mensaje desde pestaña ${activeTab}:`, formData);
+      
+      // Llamada al backend
+      await props.onSubmit(formData);
       
       // Si se envía correctamente, cerrar el modal y limpiar el formulario
       props.toggleModal();
@@ -387,7 +355,8 @@ const InboxCreate = (props: any) => {
             onChange={(e) => setTitle(e.target.value)}
           />
         </div>
-          <div className="form-group">
+        
+        <div className="form-group">
           <Label>Contenido del mensaje: <span className="text-danger">*</span></Label>
           <Input 
             name="message"
@@ -397,20 +366,18 @@ const InboxCreate = (props: any) => {
             placeholder="Escriba su mensaje aquí..."
             value={message}
             onChange={(e) => setMessage(e.target.value)}
-          />        </div>
+          />
+        </div>
       </ModalBody>
       
       <ModalFooter>
         <div className="d-flex w-100 justify-content-between">
-          <div>            <Badge color="info" className="mr-1">
+          <div>
+            <Badge color="info" className="mr-1">
               {activeTab === '1' ? 'Mensaje individual' : 
                activeTab === '2' ? 'Mensaje a curso' : 
                activeTab === '3' ? 'Mensaje a mis cursos' :
                'Mensaje institucional'}
-            </Badge>
-              <Badge color="success" className="mr-1">
-              <i className="simple-icon-social-whatsapp mr-1"></i>
-              Hello World
             </Badge>
             
             {(activeTab === '1' && selectedUser) && (

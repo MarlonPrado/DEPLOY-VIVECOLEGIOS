@@ -1,0 +1,10 @@
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile-ufps
+      args:
+        GRAPHQL_API_ENDPOINT: ${GRAPHQL_API_ENDPOINT}
+    ports:
+      - "${PORT_0}:80"
+    restart: always

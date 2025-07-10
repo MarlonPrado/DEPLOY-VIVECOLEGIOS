@@ -3,10 +3,7 @@ import { setContext } from '@apollo/client/link/context';
 import { createUploadLink } from 'apollo-upload-client';
 
 // Conexiones al servidor donde se define la URL del servidor GraphQL que apunta para desarrollo.
-const uri = 'http://localhost:4000/graphql';
-
-//const uri = 'https://deploy-vivecolegios.onrender.com/graphql';
-
+const uri = process.env.GRAPHQL_API_ENDPOINT || 'http://localhost:4000/graphql';
 //const uri = 'http://10.3.141.1:4000/graphql';
 //const uri = 'http://200.116.210.27:4000/graphql';
 //const uri = 'https://vivecolegios.nortedesantander.gov.co:4100/graphql';
@@ -24,40 +21,44 @@ const httpLink2 = createUploadLink({
 
 const authLink = setContext((_, { headers }) => {
   const token = localStorage.getItem('token');
-  return token ? {
-    headers: {
-      ...headers,
-      authorization: `Bearer ${token}` ,
-      'apollo-require-preflight': true,
-      'x-apollo-operation-name': 'ViveColegios'
-    },
-  } :{
-    headers: {
-      ...headers,
-    },
-  } ;
+  return token
+    ? {
+        headers: {
+          ...headers,
+          authorization: `Bearer ${token}`,
+          'apollo-require-preflight': true,
+          'x-apollo-operation-name': 'ViveColegios',
+        },
+      }
+    : {
+        headers: {
+          ...headers,
+        },
+      };
 });
 
 const authLinkUpload = setContext((_, { headers }) => {
   const token = localStorage.getItem('token');
-  return token ? {
-    headers: {
-      ...headers,
-      authorization: `Bearer ${token}` ,
-      "Content-Type": "multipart/form-data",
-      //'Apollo-Require-Preflight': 'true',
-      'apollo-require-preflight': true,
-      'x-apollo-operation-name': 'ViveColegios'
-    },
-  } :{
-    headers: {
-      ...headers,
-      "Content-Type": "multipart/form-data",
-      //'Apollo-Require-Preflight': 'true',
-      'apollo-require-preflight': true,
-      'x-apollo-operation-name': 'ViveColegios'
-    },
-  } ;
+  return token
+    ? {
+        headers: {
+          ...headers,
+          authorization: `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data',
+          //'Apollo-Require-Preflight': 'true',
+          'apollo-require-preflight': true,
+          'x-apollo-operation-name': 'ViveColegios',
+        },
+      }
+    : {
+        headers: {
+          ...headers,
+          'Content-Type': 'multipart/form-data',
+          //'Apollo-Require-Preflight': 'true',
+          'apollo-require-preflight': true,
+          'x-apollo-operation-name': 'ViveColegios',
+        },
+      };
 });
 
 // Cliente estándar para operaciones normales.
