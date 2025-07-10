@@ -81,8 +81,8 @@ npm start
 
 | Parte     | URL |
 |-----------|-----|
-| Frontend  | https://deploy-vivecolegios-1.onrender.com |
-| Backend   | https://deploy-vivecolegios.onrender.com |
+| Frontend  | https://vivecolegios.3.93.129.86.sslip.io/login |
+| Backend   | https://api.vivecolegios.3.93.129.86.sslip.io |
 
 > ⚠️ Es posible que el servicio se pause temporalmente por inactividad, esperar 2-5 min para inicializacion de parte del servidor
 ---
